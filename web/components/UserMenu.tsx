@@ -60,7 +60,7 @@ export function UserMenu({ name, email }: Props) {
           <DropdownMenuSeparator />
 
           <DropdownMenuItem
-            onSelect={() => setTheme(isDark ? 'light' : 'dark')}
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
             className="gap-2 cursor-pointer"
           >
             {isDark ? (
