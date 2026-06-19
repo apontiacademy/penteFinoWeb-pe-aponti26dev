@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Users } from 'lucide-react'
-import { CriarUsuarioForm } from '@/components/CriarUsuarioForm'
+import { CriarUsuarioDialog } from '@/components/CriarUsuarioDialog'
 import { UsuariosList } from '@/components/UsuariosList'
 
 export default async function UsuariosPage() {
@@ -39,29 +39,20 @@ export default async function UsuariosPage() {
         </Button>
       </Link>
 
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-          <Users className="w-5 h-5 text-primary" />
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+            <Users className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Gerenciar usuários</h1>
+            <p className="text-muted-foreground text-sm mt-0.5">
+              Crie, altere o perfil e remova usuários do sistema
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold">Gerenciar usuários</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            Crie, altere o perfil e remova usuários do sistema
-          </p>
-        </div>
+        <CriarUsuarioDialog />
       </div>
-
-      <Card className="shadow-sm border-border/60">
-        <CardHeader>
-          <CardTitle>Novo usuário</CardTitle>
-          <CardDescription>
-            O usuário receberá acesso imediato — não é necessário confirmar email.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <CriarUsuarioForm />
-        </CardContent>
-      </Card>
 
       <Card className="shadow-sm border-border/60">
         <CardHeader className="pb-3">
