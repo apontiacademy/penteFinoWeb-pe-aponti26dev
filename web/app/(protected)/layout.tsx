@@ -26,7 +26,7 @@ export default async function ProtectedLayout({
           <div className="flex items-center gap-5">
             <Link href="/auditorias" className="flex items-center gap-2 shrink-0">
               <span className="text-lg font-bold bg-gradient-to-r from-primary to-[oklch(0.710_0.191_294)] bg-clip-text text-transparent">
-                aponti
+                Aponti
               </span>
               <span className="text-border text-sm select-none">/</span>
               <span className="text-muted-foreground text-sm font-normal hidden sm:inline">
