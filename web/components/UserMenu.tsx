@@ -60,7 +60,7 @@ export function UserMenu({ name, email }: Props) {
           <DropdownMenuSeparator />
 
           <DropdownMenuItem
-            onSelect={() => setTheme(isDark ? 'light' : 'dark')}
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
             className="gap-2 cursor-pointer"
           >
             {isDark ? (
@@ -81,9 +81,9 @@ export function UserMenu({ name, email }: Props) {
           <DropdownMenuItem
             variant="destructive"
             className="gap-2 cursor-pointer"
-            render={
-              <button type="submit" form="signout-form" className="w-full" />
-            }
+            onClick={() => {
+              ;(document.getElementById('signout-form') as HTMLFormElement)?.submit()
+            }}
           >
             <LogOut className="w-4 h-4" />
             Sair
