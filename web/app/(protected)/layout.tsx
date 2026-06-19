@@ -1,9 +1,8 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Button } from '@/components/ui/button'
 import { NavLinks } from '@/components/NavLinks'
-import { LogOut } from 'lucide-react'
+import { UserMenu } from '@/components/UserMenu'
 
 export default async function ProtectedLayout({
   children,
@@ -18,6 +17,7 @@ export default async function ProtectedLayout({
   if (!user) redirect('/login')
 
   const isAdmin = user.app_metadata?.role === 'admin'
+  const name = (user.user_metadata?.nome as string | undefined) || user.email?.split('@')[0] || 'Usuário'
 
   return (
     <div className="min-h-screen">
@@ -39,22 +39,7 @@ export default async function ProtectedLayout({
             </nav>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground hidden md:block truncate max-w-[180px]">
-              {user.email}
-            </span>
-            <form action="/api/auth/signout" method="post">
-              <Button
-                variant="ghost"
-                size="sm"
-                type="submit"
-                className="gap-1.5 text-muted-foreground hover:text-foreground h-8"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline text-xs">Sair</span>
-              </Button>
-            </form>
-          </div>
+          <UserMenu name={name} email={user.email ?? ''} />
         </div>
       </header>
 

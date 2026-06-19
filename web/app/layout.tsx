@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
+import { Inter } from 'next/font/google'
+import { ThemeProvider } from '@/components/ThemeProvider'
 import './globals.css'
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
   title: 'Aponti — Pente Fino',
@@ -11,9 +12,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={geist.variable}>
+    <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans antialiased">
-        {children}
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   )
