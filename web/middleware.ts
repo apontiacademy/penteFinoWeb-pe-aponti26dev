@@ -31,6 +31,12 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const isLoginPage = request.nextUrl.pathname === '/login'
+  const isRoot = request.nextUrl.pathname === '/'
+
+  if (isRoot) {
+    const dest = user ? '/dashboard' : '/login'
+    return NextResponse.redirect(new URL(dest, request.url))
+  }
   const isAdminRoute = ADMIN_ROUTES.some((r) =>
     request.nextUrl.pathname.startsWith(r)
   )
@@ -40,7 +46,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user && isLoginPage) {
-    return NextResponse.redirect(new URL('/auditorias', request.url))
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   if (user && isAdminRoute && user.app_metadata?.role !== 'admin') {
