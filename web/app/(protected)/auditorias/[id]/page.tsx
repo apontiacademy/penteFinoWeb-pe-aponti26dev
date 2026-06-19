@@ -106,17 +106,21 @@ export default async function AuditoriaDetailPage({
       {relatorios && relatorios.length > 0 && (
         <Card className="shadow-sm border-border/60">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            <CardTitle className="text-sm font-semibold text-foreground/70 uppercase tracking-wider">
               Relatórios incluídos
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             {relatorios.map((r) => (
-              <Badge key={r.id} variant="secondary" className="gap-1.5 py-1 px-3">
-                <FileText className="w-3 h-3" />
-                {r.nome}
-                <span className="text-muted-foreground">— {r.semana}</span>
-              </Badge>
+              <div
+                key={r.id}
+                className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5"
+              >
+                <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span className="text-sm font-medium text-foreground">{r.nome}</span>
+                <span className="w-px h-3 bg-border" />
+                <span className="text-xs text-muted-foreground">{r.semana}</span>
+              </div>
             ))}
           </CardContent>
         </Card>
