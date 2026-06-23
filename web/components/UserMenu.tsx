@@ -1,7 +1,8 @@
 'use client'
 
 import { useTheme } from 'next-themes'
-import { Moon, Sun, LogOut, ChevronDown } from 'lucide-react'
+import { Moon, Sun, LogOut, ChevronDown, Settings } from 'lucide-react'
+import Link from 'next/link'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,9 +15,10 @@ import { cn } from '@/lib/utils'
 type Props = {
   name: string
   email: string
+  isAdmin: boolean
 }
 
-export function UserMenu({ name, email }: Props) {
+export function UserMenu({ name, email, isAdmin }: Props) {
   const { resolvedTheme, setTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
 
@@ -58,6 +60,16 @@ export function UserMenu({ name, email }: Props) {
           </div>
 
           <DropdownMenuSeparator />
+
+          {isAdmin && (
+            <DropdownMenuItem
+              render={<Link href="/configuracoes" />}
+              className="gap-2 cursor-pointer"
+            >
+              <Settings className="w-4 h-4" />
+              Configurações
+            </DropdownMenuItem>
+          )}
 
           <DropdownMenuItem
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
