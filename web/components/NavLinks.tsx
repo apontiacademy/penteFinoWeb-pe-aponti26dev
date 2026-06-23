@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BarChart3, FileText, Settings } from 'lucide-react'
+import { BarChart3, FileText, Settings, LayoutDashboard } from 'lucide-react'
 
 const allLinks = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/auditorias', label: 'Auditorias', icon: BarChart3 },
   { href: '/relatorios', label: 'Relatórios', icon: FileText, adminOnly: true },
   { href: '/configuracoes', label: 'Configurações', icon: Settings, adminOnly: true },
