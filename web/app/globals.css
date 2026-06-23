@@ -58,15 +58,15 @@
   --popover-foreground: oklch(0.16 0.06 292);
   --primary: oklch(0.452 0.286 294);             /* #6518EA */
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.938 0.028 294);           /* roxo muito claro — badges/botão secondary */
-  --secondary-foreground: oklch(0.340 0.200 292);
+  --secondary: oklch(0.895 0.055 294);           /* roxo suave — visível sem ser saturado */
+  --secondary-foreground: oklch(0.301 0.215 292);
   --muted: oklch(0.945 0.014 294);               /* lavanda neutra — hover e backgrounds */
   --muted-foreground: oklch(0.50 0.040 294);     /* cinza-roxo legível */
   --accent: oklch(0.827 0.181 87);               /* #FBC100 */
   --accent-foreground: oklch(0.18 0.06 292);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.895 0.022 294);
-  --input: oklch(0.925 0.018 294);
+  --input: oklch(0.895 0.022 294);
   --ring: oklch(0.452 0.286 294);                /* #6518EA */
   --chart-1: oklch(0.452 0.286 294);
   --chart-2: oklch(0.827 0.181 87);
