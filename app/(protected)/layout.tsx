@@ -39,7 +39,7 @@ export default async function ProtectedLayout({
             </nav>
           </div>
 
-          <UserMenu name={name} email={user.email ?? ''} />
+          <UserMenu name={name} email={user.email ?? ''} isAdmin={isAdmin} />
         </div>
       </header>
 
