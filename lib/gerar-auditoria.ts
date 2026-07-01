@@ -10,8 +10,8 @@ import {
 } from './pente-fino'
 
 export async function gerarAuditoria(
-  triggerType: 'add' | 'delete',
-  relatorioTriggerId: string,
+  triggerType: 'add' | 'delete' | 'manual',
+  relatorioTriggerId: string | null,
   supabase: SupabaseClient
 ): Promise<void> {
 
