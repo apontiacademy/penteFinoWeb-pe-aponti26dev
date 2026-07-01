@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/card'
 import { RelatoriosList } from '@/components/RelatoriosList'
 import { AdicionarRelatorioForm } from '@/components/AdicionarRelatorioForm'
+import { GerarAuditoriaButton } from '@/components/GerarAuditoriaButton'
 import { FileText } from 'lucide-react'
 
 export default async function RelatoriosPage() {
@@ -43,8 +44,8 @@ export default async function RelatoriosPage() {
         <CardHeader>
           <CardTitle>Adicionar relatório</CardTitle>
           <CardDescription>
-            Faça upload do CSV exportado do Moodle. Uma nova auditoria será gerada
-            automaticamente.
+            Faça upload do CSV exportado do Moodle. Depois de anexado, você poderá optar
+            por gerar uma nova auditoria.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -53,11 +54,14 @@ export default async function RelatoriosPage() {
       </Card>
 
       <Card className="shadow-sm border-border/60">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Relatórios ativos</CardTitle>
-          <CardDescription>
-            {relatorios?.length ?? 0} relatório(s) incluídos na próxima auditoria
-          </CardDescription>
+        <CardHeader className="pb-3 flex flex-row items-start justify-between gap-4">
+          <div>
+            <CardTitle className="text-base">Relatórios ativos</CardTitle>
+            <CardDescription>
+              {relatorios?.length ?? 0} relatório(s) incluídos na próxima auditoria
+            </CardDescription>
+          </div>
+          <GerarAuditoriaButton />
         </CardHeader>
         <CardContent>
           <RelatoriosList relatorios={relatorios ?? []} />
