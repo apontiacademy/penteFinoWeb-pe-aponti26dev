@@ -29,13 +29,17 @@ export function RelatoriosList({ relatorios }: { relatorios: Relatorio[] }) {
   const [relatorioExcluidoId, setRelatorioExcluidoId] = useState<string | null>(null)
   const [gerando, setGerando] = useState(false)
   const [gerarError, setGerarError] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   async function handleDelete(id: string) {
     setDeletingId(id)
+    setDeleteError(null)
     try {
       await deletarRelatorio(id)
       setGerarError(null)
       setRelatorioExcluidoId(id)
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : 'Erro ao excluir relatório')
     } finally {
       setDeletingId(null)
     }
@@ -98,7 +102,11 @@ export function RelatoriosList({ relatorios }: { relatorios: Relatorio[] }) {
               </div>
             </div>
 
-            <AlertDialog>
+            <AlertDialog
+              onOpenChange={(open) => {
+                if (!open) setDeleteError(null)
+              }}
+            >
               <AlertDialogTrigger render={
                 <Button
                   variant="ghost"
@@ -116,6 +124,12 @@ export function RelatoriosList({ relatorios }: { relatorios: Relatorio[] }) {
                     desfeita.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
+                {deleteError && (
+                  <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/8 border border-destructive/20 px-3 py-2.5 rounded-lg">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    {deleteError}
+                  </div>
+                )}
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction
