@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
-import { ChevronRight, PlusCircle, MinusCircle, ClipboardList } from 'lucide-react'
+import { ChevronRight, ClipboardList } from 'lucide-react'
+import { TRIGGER_INFO } from '@/lib/trigger-info'
 
 type Auditoria = {
   id: string
@@ -8,27 +9,6 @@ type Auditoria = {
   trigger_type: 'add' | 'delete' | 'manual'
   relatorios_incluidos: string[]
 }
-
-const TRIGGER_INFO = {
-  add: {
-    label: 'adição',
-    icon: PlusCircle,
-    iconClass: 'bg-primary/10 text-primary',
-    badgeClass: 'border-primary/30 text-primary bg-primary/5',
-  },
-  delete: {
-    label: 'exclusão',
-    icon: MinusCircle,
-    iconClass: 'bg-destructive/10 text-destructive',
-    badgeClass: 'border-destructive/30 text-destructive bg-destructive/5',
-  },
-  manual: {
-    label: 'manual',
-    icon: ClipboardList,
-    iconClass: 'bg-muted text-muted-foreground',
-    badgeClass: 'border-border text-muted-foreground bg-muted/50',
-  },
-} as const
 
 export function AuditoriasList({ auditorias }: { auditorias: Auditoria[] }) {
   if (!auditorias.length) {
