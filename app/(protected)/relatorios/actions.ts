@@ -71,3 +71,21 @@ export async function deletarRelatorio(relatorioId: string) {
 
   revalidatePath('/relatorios')
 }
+
+export async function gerarAuditoriaManual(
+  triggerType: 'add' | 'delete' | 'manual',
+  relatorioTriggerId: string | null
+): Promise<{ error?: string; success?: boolean }> {
+  try {
+    await verificarAdmin()
+    const supabase = await createClient()
+
+    await gerarAuditoria(triggerType, relatorioTriggerId, supabase)
+
+    revalidatePath('/relatorios')
+    revalidatePath('/auditorias')
+    return { success: true }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Erro desconhecido' }
+  }
+}
