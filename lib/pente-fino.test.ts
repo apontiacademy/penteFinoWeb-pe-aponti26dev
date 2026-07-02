@@ -30,6 +30,11 @@ Pedro Lima,pedro@y.com`
 const CSV_REL_SEM_COLUNA = `Outro,Header
 A,B`
 
+// Relatório com coluna "Grupos" preenchida para um aluno, vazia para outro
+const CSV_REL_COM_GRUPOS = `Nome completo,Grupos,Email
+João Silva,Maranhão: Hermes - 42.441.933/0001-64,joao@x.com
+Pedro Lima,,pedro@x.com`
+
 describe('normalizarNome', () => {
   it('coloca em minúsculo e colapsa espaços múltiplos', () => {
     expect(normalizarNome('  João  Silva  ')).toBe('joão silva')
@@ -115,6 +120,23 @@ describe('carregarRelatorio', () => {
 
   it('retorna null se coluna "Nome completo" ausente', () => {
     expect(carregarRelatorio(CSV_REL_SEM_COLUNA)).toBeNull()
+  })
+})
+
+describe('extrairGruposRelatorio', () => {
+  it('extrai estado (normalizado) e empresa por nome normalizado', () => {
+    const grupos = extrairGruposRelatorio(CSV_REL_COM_GRUPOS)
+    expect(grupos.get('joão silva')).toEqual(['MA', 'Hermes'])
+  })
+
+  it('ignora aluno com célula de Grupos vazia', () => {
+    const grupos = extrairGruposRelatorio(CSV_REL_COM_GRUPOS)
+    expect(grupos.has('pedro lima')).toBe(false)
+  })
+
+  it('retorna Map vazio se não houver coluna Grupos', () => {
+    const grupos = extrairGruposRelatorio(CSV_REL_COM_COLUNA)
+    expect(grupos.size).toBe(0)
   })
 })
 

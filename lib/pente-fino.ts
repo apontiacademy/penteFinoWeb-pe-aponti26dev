@@ -162,6 +162,28 @@ export function carregarRelatorio(csvText: string): Set<string> | null {
   )
 }
 
+export function extrairGruposRelatorio(csvText: string): Map<string, [string, string]> {
+  const { data, meta } = Papa.parse<Record<string, string>>(csvText, {
+    header: true,
+    skipEmptyLines: true,
+  })
+
+  const nomeKey = meta.fields?.find((f) => f === 'Nome completo')
+  const gruposKey = meta.fields?.find((f) => f === 'Grupos')
+  const grupos = new Map<string, [string, string]>()
+
+  if (!nomeKey || !gruposKey) return grupos
+
+  for (const row of data) {
+    const nomeNormalizado = normalizarNome(row[nomeKey] ?? '')
+    const valorGrupos = row[gruposKey]
+    if (!nomeNormalizado || !valorGrupos) continue
+    grupos.set(nomeNormalizado, parsearGrupos(valorGrupos))
+  }
+
+  return grupos
+}
+
 export function calcularAusencias(
   alunos: Aluno[],
   relatorios: Record<string, Set<string>>
