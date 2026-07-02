@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { AuditResultTable } from '@/components/AuditResultTable'
-import { ArrowLeft, PlusCircle, MinusCircle, Calendar, FileText } from 'lucide-react'
+import { ArrowLeft, Calendar, FileText } from 'lucide-react'
+import { TRIGGER_INFO } from '@/lib/trigger-info'
 
 type Resultado = {
   nao_feitos: {
@@ -46,7 +47,8 @@ export default async function AuditoriaDetailPage({
     .in('id', auditoria.relatorios_incluidos ?? [])
 
   const resultado = auditoria.resultado_json as Resultado | null
-  const isAdd = auditoria.trigger_type === 'add'
+  const info = TRIGGER_INFO[auditoria.trigger_type as keyof typeof TRIGGER_INFO]
+  const Icon = info.icon
 
   return (
     <div className="space-y-6">
@@ -62,29 +64,16 @@ export default async function AuditoriaDetailPage({
       <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
         <div className="flex items-start gap-4">
           <div
-            className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-              isAdd ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'
-            }`}
+            className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${info.iconClass}`}
           >
-            {isAdd ? (
-              <PlusCircle className="w-6 h-6" />
-            ) : (
-              <MinusCircle className="w-6 h-6" />
-            )}
+            <Icon className="w-6 h-6" />
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <h1 className="text-xl font-bold">Auditoria</h1>
-              <Badge
-                variant="outline"
-                className={`text-xs ${
-                  isAdd
-                    ? 'border-primary/30 text-primary bg-primary/5'
-                    : 'border-destructive/30 text-destructive bg-destructive/5'
-                }`}
-              >
-                {isAdd ? 'adição' : 'exclusão'}
+              <Badge variant="outline" className={`text-xs ${info.badgeClass}`}>
+                {info.label}
               </Badge>
             </div>
 

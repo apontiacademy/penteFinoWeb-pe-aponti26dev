@@ -1,11 +1,12 @@
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
-import { ChevronRight, PlusCircle, MinusCircle, ClipboardList } from 'lucide-react'
+import { ChevronRight, ClipboardList } from 'lucide-react'
+import { TRIGGER_INFO } from '@/lib/trigger-info'
 
 type Auditoria = {
   id: string
   created_at: string
-  trigger_type: 'add' | 'delete'
+  trigger_type: 'add' | 'delete' | 'manual'
   relatorios_incluidos: string[]
 }
 
@@ -31,7 +32,8 @@ export function AuditoriasList({ auditorias }: { auditorias: Auditoria[] }) {
   return (
     <ul className="space-y-2">
       {auditorias.map((a, idx) => {
-        const isAdd = a.trigger_type === 'add'
+        const info = TRIGGER_INFO[a.trigger_type]
+        const Icon = info.icon
         return (
           <li key={a.id}>
             <Link
@@ -40,17 +42,9 @@ export function AuditoriasList({ auditorias }: { auditorias: Auditoria[] }) {
             >
               <div className="flex items-center gap-3">
                 <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                    isAdd
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-destructive/10 text-destructive'
-                  }`}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${info.iconClass}`}
                 >
-                  {isAdd ? (
-                    <PlusCircle className="w-4 h-4" />
-                  ) : (
-                    <MinusCircle className="w-4 h-4" />
-                  )}
+                  <Icon className="w-4 h-4" />
                 </div>
 
                 <div>
@@ -65,15 +59,8 @@ export function AuditoriasList({ auditorias }: { auditorias: Auditoria[] }) {
               </div>
 
               <div className="flex items-center gap-2">
-                <Badge
-                  variant="outline"
-                  className={`text-xs border ${
-                    isAdd
-                      ? 'border-primary/30 text-primary bg-primary/5'
-                      : 'border-destructive/30 text-destructive bg-destructive/5'
-                  }`}
-                >
-                  {isAdd ? 'adição' : 'exclusão'}
+                <Badge variant="outline" className={`text-xs border ${info.badgeClass}`}>
+                  {info.label}
                 </Badge>
                 <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0" />
               </div>

@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { AlertCircle, Loader2, ShieldCheck, BarChart3, FileText } from 'lucide-react'
+import { AlertCircle, Loader2, ShieldCheck, BarChart3, FileText, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState('')
   const [loading, setLoading] = useState(false)
+  const [mostrarSenha, setMostrarSenha] = useState(false)
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -118,16 +119,27 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <Label htmlFor="senha">Senha</Label>
-              <Input
-                id="senha"
-                type="password"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                required
-                placeholder="••••••••"
-                autoComplete="current-password"
-                className="h-11"
-              />
+              <div className="relative">
+                <Input
+                  id="senha"
+                  type={mostrarSenha ? 'text' : 'password'}
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  className="h-11 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setMostrarSenha((v) => !v)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                  aria-label={mostrarSenha ? 'Ocultar senha' : 'Exibir senha'}
+                  tabIndex={-1}
+                >
+                  {mostrarSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             {erro && (
