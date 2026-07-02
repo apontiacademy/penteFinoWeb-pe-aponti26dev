@@ -28,6 +28,63 @@ export function normalizarNome(nome: string): string {
   return nome.trim().toLowerCase().replace(/\s+/g, ' ')
 }
 
+const UF_POR_NOME_ESTADO: Record<string, string> = {
+  'acre': 'AC',
+  'alagoas': 'AL',
+  'amapa': 'AP',
+  'amazonas': 'AM',
+  'bahia': 'BA',
+  'ceara': 'CE',
+  'distrito federal': 'DF',
+  'espirito santo': 'ES',
+  'goias': 'GO',
+  'maranhao': 'MA',
+  'mato grosso': 'MT',
+  'mato grosso do sul': 'MS',
+  'minas gerais': 'MG',
+  'para': 'PA',
+  'paraiba': 'PB',
+  'parana': 'PR',
+  'pernambuco': 'PE',
+  'piaui': 'PI',
+  'rio de janeiro': 'RJ',
+  'rio grande do norte': 'RN',
+  'rio grande do sul': 'RS',
+  'rondonia': 'RO',
+  'roraima': 'RR',
+  'santa catarina': 'SC',
+  'sao paulo': 'SP',
+  'sergipe': 'SE',
+  'tocantins': 'TO',
+}
+
+const UFS_VALIDAS = new Set(Object.values(UF_POR_NOME_ESTADO))
+
+const MAPA_ACENTOS: Record<string, string> = {
+  'á': 'a', 'à': 'a', 'ã': 'a', 'â': 'a',
+  'é': 'e', 'ê': 'e',
+  'í': 'i',
+  'ó': 'o', 'õ': 'o', 'ô': 'o',
+  'ú': 'u',
+  'ç': 'c',
+}
+
+function removerAcentos(valor: string): string {
+  return valor
+    .split('')
+    .map((c) => MAPA_ACENTOS[c] ?? c)
+    .join('')
+}
+
+export function normalizarUF(valor: string): string {
+  const limpo = valor.trim()
+  if (!limpo) return ''
+  const maiusculo = limpo.toUpperCase()
+  if (maiusculo.length === 2 && UFS_VALIDAS.has(maiusculo)) return maiusculo
+  const chave = removerAcentos(limpo).toLowerCase()
+  return UF_POR_NOME_ESTADO[chave] ?? limpo
+}
+
 // Analisa "UF:Empresa - CNPJ" ou "UF | Empresa" → [estado, empresa]
 export function parsearGrupos(valor: string): [string, string] {
   const colonIdx = valor.indexOf(':')
@@ -141,4 +198,13 @@ export function calcularPresencas(
       totalFeitos: feitos.length,
     }
   })
+}
+
+// Stub implementations for Task 2 and Task 3
+export function extrairGruposRelatorio(csvText: string): Record<string, any> {
+  throw new Error('Not implemented')
+}
+
+export function aplicarFallbackGrupos(alunos: Aluno[], grupos: Record<string, any>): Aluno[] {
+  throw new Error('Not implemented')
 }

@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import {
   normalizarNome,
+  normalizarUF,
   parsearGrupos,
   carregarAlunos,
   carregarRelatorio,
+  extrairGruposRelatorio,
+  aplicarFallbackGrupos,
   calcularAusencias,
   calcularPresencas,
 } from './pente-fino'
@@ -34,6 +37,28 @@ describe('normalizarNome', () => {
 
   it('mantém nome simples sem alteração além de minúsculo', () => {
     expect(normalizarNome('Maria Souza')).toBe('maria souza')
+  })
+})
+
+describe('normalizarUF', () => {
+  it('converte nome completo do estado (com acento) para sigla', () => {
+    expect(normalizarUF('Maranhão')).toBe('MA')
+  })
+
+  it('mantém sigla já válida inalterada', () => {
+    expect(normalizarUF('PE')).toBe('PE')
+  })
+
+  it('converte sigla em minúsculo para maiúsculo', () => {
+    expect(normalizarUF('pe')).toBe('PE')
+  })
+
+  it('mantém valor desconhecido sem alteração', () => {
+    expect(normalizarUF('Nao Existe')).toBe('Nao Existe')
+  })
+
+  it('retorna string vazia para entrada vazia', () => {
+    expect(normalizarUF('')).toBe('')
   })
 })
 
