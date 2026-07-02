@@ -79,6 +79,12 @@ describe('parsearGrupos', () => {
     const [estado, empresa] = parsearGrupos('semformato')
     expect(estado).toBe('')
   })
+
+  it('normaliza nome completo do estado para sigla', () => {
+    const [estado, empresa] = parsearGrupos('Maranhão: Hermes - 42.441.933/0001-64')
+    expect(estado).toBe('MA')
+    expect(empresa).toBe('Hermes')
+  })
 })
 
 describe('carregarAlunos', () => {

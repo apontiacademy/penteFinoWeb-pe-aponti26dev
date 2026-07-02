@@ -93,13 +93,13 @@ export function parsearGrupos(valor: string): [string, string] {
     const resto = valor.slice(colonIdx + 1)
     const dashIdx = resto.indexOf(' - ')
     const empresa = dashIdx !== -1 ? resto.slice(0, dashIdx).trim() : resto.trim()
-    return [estado, empresa]
+    return [normalizarUF(estado), empresa]
   }
   const pipeIdx = valor.indexOf('|')
   if (pipeIdx !== -1) {
     const estado = valor.slice(0, pipeIdx).trim()
     const empresa = valor.slice(pipeIdx + 1).trim()
-    return [estado, empresa]
+    return [normalizarUF(estado), empresa]
   }
   return ['', valor.trim()]
 }
