@@ -19,7 +19,7 @@ export default async function AuditoriasPage() {
         <div>
           <h1 className="text-2xl font-bold">Auditorias</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            Histórico de todas as auditorias geradas automaticamente
+            Histórico de todas as auditorias geradas
           </p>
         </div>
       </div>

@@ -15,7 +15,7 @@ async function verificarAdmin() {
   return user
 }
 
-type ActionState = { error?: string; success?: boolean } | null
+type ActionState = { error?: string; success?: boolean; relatorioId?: string } | null
 
 export async function adicionarRelatorio(
   _prev: ActionState,
@@ -51,11 +51,8 @@ export async function adicionarRelatorio(
 
     if (insertError) return { error: `Erro ao registrar: ${insertError.message}` }
 
-    await gerarAuditoria('add', relatorioId, supabase)
-
     revalidatePath('/relatorios')
-    revalidatePath('/auditorias')
-    return { success: true }
+    return { success: true, relatorioId }
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Erro desconhecido' }
   }
@@ -72,8 +69,23 @@ export async function deletarRelatorio(relatorioId: string) {
 
   if (error) throw new Error(`Erro ao deletar: ${error.message}`)
 
-  await gerarAuditoria('delete', relatorioId, supabase)
-
   revalidatePath('/relatorios')
-  revalidatePath('/auditorias')
+}
+
+export async function gerarAuditoriaManual(
+  triggerType: 'add' | 'delete' | 'manual',
+  relatorioTriggerId: string | null
+): Promise<{ error?: string; success?: boolean }> {
+  try {
+    await verificarAdmin()
+    const supabase = await createClient()
+
+    await gerarAuditoria(triggerType, relatorioTriggerId, supabase)
+
+    revalidatePath('/relatorios')
+    revalidatePath('/auditorias')
+    return { success: true }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Erro desconhecido' }
+  }
 }
