@@ -204,3 +204,20 @@ describe('calcularPresencas', () => {
     expect(maria.totalFeitos).toBe(0)
   })
 })
+
+describe('integração: fallback de UF do relatório semanal', () => {
+  it('aluno sem UF na planilha geral (Formato A) recebe UF/empresa extraídas do relatório', () => {
+    const alunos = carregarAlunos(CSV_ALUNOS_A)
+    const grupos = extrairGruposRelatorio(CSV_REL_COM_GRUPOS)
+    const enriquecidos = aplicarFallbackGrupos(alunos, grupos)
+
+    const joao = enriquecidos.find((a) => a.nomeNormalizado === 'joão silva')!
+    expect(joao.estado).toBe('MA')
+    // empresa já vinha preenchida pela planilha geral (Empresa X) — não é sobrescrita
+    expect(joao.empresa).toBe('Empresa X')
+
+    const maria = enriquecidos.find((a) => a.nomeNormalizado === 'maria souza')!
+    // Maria não aparece em nenhum relatório com Grupos preenchido — segue vazia
+    expect(maria.estado).toBe('')
+  })
+})
