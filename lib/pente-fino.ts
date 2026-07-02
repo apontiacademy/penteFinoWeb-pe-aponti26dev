@@ -200,11 +200,3 @@ export function calcularPresencas(
   })
 }
 
-// Stub implementations for Task 2 and Task 3
-export function extrairGruposRelatorio(csvText: string): Record<string, any> {
-  throw new Error('Not implemented')
-}
-
-export function aplicarFallbackGrupos(alunos: Aluno[], grupos: Record<string, any>): Aluno[] {
-  throw new Error('Not implemented')
-}
