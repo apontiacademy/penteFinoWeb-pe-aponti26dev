@@ -164,6 +164,16 @@ describe('aplicarFallbackGrupos', () => {
     const resultado = aplicarFallbackGrupos(alunos, new Map())
     expect(resultado).toEqual(alunos)
   })
+
+  it('preenche empresa vazia a partir do fallback', () => {
+    const alunos = carregarAlunos(CSV_ALUNOS_A) // Formato A: estado e o teste aqui força empresa vazia
+    const alunoSemEmpresa = alunos.map((a) => ({ ...a, empresa: '' }))
+    const grupos = new Map<string, [string, string]>([['joão silva', ['MA', 'Hermes']]])
+    const resultado = aplicarFallbackGrupos(alunoSemEmpresa, grupos)
+
+    const joao = resultado.find((a) => a.nomeNormalizado === 'joão silva')!
+    expect(joao.empresa).toBe('Hermes')
+  })
 })
 
 describe('calcularAusencias', () => {
