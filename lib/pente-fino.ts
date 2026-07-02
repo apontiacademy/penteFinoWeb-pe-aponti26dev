@@ -81,7 +81,7 @@ export function normalizarUF(valor: string): string {
   if (!limpo) return ''
   const maiusculo = limpo.toUpperCase()
   if (maiusculo.length === 2 && UFS_VALIDAS.has(maiusculo)) return maiusculo
-  const chave = removerAcentos(limpo).toLowerCase()
+  const chave = removerAcentos(limpo.toLowerCase())
   return UF_POR_NOME_ESTADO[chave] ?? limpo
 }
 

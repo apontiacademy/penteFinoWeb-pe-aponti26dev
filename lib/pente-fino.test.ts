@@ -65,6 +65,10 @@ describe('normalizarUF', () => {
   it('retorna string vazia para entrada vazia', () => {
     expect(normalizarUF('')).toBe('')
   })
+
+  it('normaliza nome completo do estado todo em maiúsculo', () => {
+    expect(normalizarUF('MARANHÃO')).toBe('MA')
+  })
 })
 
 describe('parsearGrupos', () => {
