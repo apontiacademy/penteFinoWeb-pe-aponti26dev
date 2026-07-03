@@ -34,3 +34,18 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Fluxo de trabalho (gitflow)
+
+Este projeto segue gitflow com três camadas de branches:
+
+```
+feat/*, fix/*  --PR-->  develop  --PR-->  staging  --PR-->  main
+```
+
+- `feat/*`/`fix/*`: branches de trabalho, uma por funcionalidade/correção, sempre a partir de `develop`.
+- `develop`: integração contínua do que já foi revisado e mesclado.
+- `staging`: ambiente de homologação. Recebe promoções de `develop` sob demanda, via PR. Tem deploy de preview automático na Vercel (mesma branch, sem configuração extra).
+- `main`: produção. Só recebe promoções de `staging` (nunca direto de `develop`), via PR, depois de validado em staging.
+
+Cada mudança notável é registrada no [CHANGELOG.md](./CHANGELOG.md), na seção `[Unreleased]`. Ao promover `staging` para `main`, essa seção vira uma nova versão datada.
