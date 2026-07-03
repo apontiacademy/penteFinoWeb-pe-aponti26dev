@@ -52,7 +52,10 @@ export function AuditoriasList({ auditorias }: { auditorias: Auditoria[] }) {
                     Auditoria #{auditorias.length - idx}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {new Date(a.created_at).toLocaleString('pt-BR')} ·{' '}
+                    {new Date(a.created_at).toLocaleString('pt-BR', {
+                      timeZone: 'America/Sao_Paulo',
+                    })}{' '}
+                    ·{' '}
                     {a.relatorios_incluidos.length} relatório(s)
                   </p>
                 </div>

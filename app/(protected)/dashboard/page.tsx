@@ -82,6 +82,7 @@ export default async function DashboardPage() {
     const emDia = nf.filter((r) => r.totalAusencias === 0).length
     return {
       data: new Date(a.created_at).toLocaleDateString('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
         day: '2-digit',
         month: '2-digit',
       }),
