@@ -1,39 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pente Fino
 
-## Getting Started
+Ferramenta interna da Aponti para auditoria de relatórios semanais de estágio (Moodle). Compara a planilha geral de alunos com os relatórios recebidos e gera automaticamente uma auditoria mostrando quem entregou e quem está com pendências, por semana, estado (UF) e empresa.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- [Next.js 16](https://nextjs.org) (App Router, Turbopack) + React 19 + TypeScript
+- [Supabase](https://supabase.com) — Postgres (dados), Storage (CSVs) e Auth (login)
+- Tailwind CSS v4 + [shadcn/ui](https://ui.shadcn.com) (Base UI)
+- [Vitest](https://vitest.dev) para testes unitários
+- [PapaParse](https://www.papaparse.com) para leitura dos CSVs exportados do Moodle
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Funcionalidades
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Login** com autenticação via Supabase.
+- **Relatórios**: upload dos CSVs semanais exportados do Moodle, com histórico e exclusão.
+- **Auditorias**: geração sob demanda (comparando a planilha geral com os relatórios ativos), com detalhamento de presenças/ausências por aluno.
+- **Dashboard**: indicadores gerais, evolução do cumprimento e distribuição por UF.
+- **Configurações**: upload da planilha geral de alunos e gerenciamento de usuários (admin).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Pré-requisitos
 
-## Learn More
+- Node.js 20+
+- Um projeto no [Supabase](https://supabase.com) já configurado com as tabelas usadas pelo app (`auditorias`, `relatorios`, `planilha_geral`, etc.) e um bucket de Storage para os CSVs.
 
-To learn more about Next.js, take a look at the following resources:
+## Configuração
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Instale as dependências:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```bash
+   npm install
+   ```
 
-## Deploy on Vercel
+2. Crie um arquivo `.env.local` na raiz do projeto com as credenciais do seu projeto Supabase:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   ```bash
+   NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-anon-key
+   SUPABASE_SERVICE_ROLE_KEY=sua-service-role-key
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   > A `SUPABASE_SERVICE_ROLE_KEY` é usada apenas em código server-side (ex.: gerenciamento de usuários) e nunca deve ser exposta no client.
+
+3. Rode o servidor de desenvolvimento:
+
+   ```bash
+   npm run dev
+   ```
+
+   Acesse [http://localhost:3000](http://localhost:3000).
+
+## Scripts disponíveis
+
+| Comando               | Descrição                                  |
+| --------------------- | ------------------------------------------- |
+| `npm run dev`          | Sobe o servidor de desenvolvimento (Turbopack) |
+| `npm run build`        | Build de produção                           |
+| `npm run start`        | Sobe o servidor de produção (após o build)  |
+| `npm run lint`         | Roda o ESLint                               |
+| `npm run test`         | Roda os testes unitários (Vitest)           |
+| `npm run test:watch`   | Roda os testes em modo watch                |
 
 ## Fluxo de trabalho (gitflow)
 
@@ -49,3 +74,7 @@ feat/*, fix/*  --PR-->  develop  --PR-->  staging  --PR-->  main
 - `main`: produção. Só recebe promoções de `staging` (nunca direto de `develop`), via PR, depois de validado em staging.
 
 Cada mudança notável é registrada no [CHANGELOG.md](./CHANGELOG.md), na seção `[Unreleased]`. Ao promover `staging` para `main`, essa seção vira uma nova versão datada.
+
+## Deploy
+
+O deploy é feito na [Vercel](https://vercel.com). Configure as mesmas variáveis de ambiente do `.env.local` no painel do projeto na Vercel.
