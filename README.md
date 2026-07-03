@@ -62,7 +62,18 @@ Ferramenta interna da Aponti para auditoria de relatórios semanais de estágio 
 
 ## Fluxo de trabalho (gitflow)
 
-Este projeto segue gitflow: branches `feat/*`/`fix/*` a partir de `develop`, com PR de revisão antes do merge. Promoções de `develop` para `main` são feitas manualmente via PR, quando o time decide publicar uma nova versão estável.
+Este projeto segue gitflow com três camadas de branches:
+
+```
+feat/*, fix/*  --PR-->  develop  --PR-->  staging  --PR-->  main
+```
+
+- `feat/*`/`fix/*`: branches de trabalho, uma por funcionalidade/correção, sempre a partir de `develop`.
+- `develop`: integração contínua do que já foi revisado e mesclado.
+- `staging`: ambiente de homologação. Recebe promoções de `develop` sob demanda, via PR. Tem deploy de preview automático na Vercel (mesma branch, sem configuração extra).
+- `main`: produção. Só recebe promoções de `staging` (nunca direto de `develop`), via PR, depois de validado em staging.
+
+Cada mudança notável é registrada no [CHANGELOG.md](./CHANGELOG.md), na seção `[Unreleased]`. Ao promover `staging` para `main`, essa seção vira uma nova versão datada.
 
 ## Deploy
 
