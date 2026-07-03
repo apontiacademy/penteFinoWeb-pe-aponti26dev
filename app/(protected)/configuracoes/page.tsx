@@ -65,7 +65,9 @@ export default async function ConfiguracoesPage() {
                   <li key={p.id} className="flex items-center gap-2.5">
                     <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                     <span className="text-sm text-muted-foreground">
-                      {new Date(p.uploaded_at).toLocaleString('pt-BR')}
+                      {new Date(p.uploaded_at).toLocaleString('pt-BR', {
+                        timeZone: 'America/Sao_Paulo',
+                      })}
                     </span>
                     {i === 0 && (
                       <Badge className="text-xs h-5 px-2 bg-primary/10 text-primary border-primary/20 border">

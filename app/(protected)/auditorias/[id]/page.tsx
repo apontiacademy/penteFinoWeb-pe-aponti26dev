@@ -80,7 +80,9 @@ export default async function AuditoriaDetailPage({
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5" />
-                {new Date(auditoria.created_at).toLocaleString('pt-BR')}
+                {new Date(auditoria.created_at).toLocaleString('pt-BR', {
+                  timeZone: 'America/Sao_Paulo',
+                })}
               </span>
               <span className="flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5" />
