@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 function sanitizeNext(next: string | null): string {
-  if (next && next.startsWith('/') && !next.startsWith('//')) {
+  if (next && /^\/(?!\/|\\)/.test(next)) {
     return next
   }
   return '/dashboard'
