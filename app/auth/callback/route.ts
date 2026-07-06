@@ -2,18 +2,15 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-function sanitizeNext(next: string | null, requestUrl: string): string {
-  if (next) {
-    try {
-      const resolved = new URL(next, requestUrl)
-      if (resolved.origin === new URL(requestUrl).origin) {
-        return resolved.pathname + resolved.search + resolved.hash
-      }
-    } catch {
-      // invalid URL, fall through to default
-    }
+function sanitizeNext(next: string | null, requestUrl: string): URL {
+  const fallback = new URL('/dashboard', requestUrl)
+  if (!next) return fallback
+  try {
+    const resolved = new URL(next, requestUrl)
+    return resolved.origin === fallback.origin ? resolved : fallback
+  } catch {
+    return fallback
   }
-  return '/dashboard'
 }
 
 export async function GET(request: NextRequest) {
@@ -24,7 +21,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      return NextResponse.redirect(new URL(next, request.url))
+      return NextResponse.redirect(next)
     }
   }
 
