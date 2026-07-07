@@ -3,8 +3,9 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 const ADMIN_ROUTES = ['/relatorios', '/configuracoes']
+const PUBLIC_ROUTES = ['/login', '/esqueci-senha', '/redefinir-senha', '/auth/callback']
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -32,6 +33,7 @@ export async function middleware(request: NextRequest) {
 
   const isLoginPage = request.nextUrl.pathname === '/login'
   const isRoot = request.nextUrl.pathname === '/'
+  const isPublicRoute = PUBLIC_ROUTES.some((r) => request.nextUrl.pathname === r)
 
   if (isRoot) {
     const dest = user ? '/dashboard' : '/login'
@@ -41,7 +43,7 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(r)
   )
 
-  if (!user && !isLoginPage) {
+  if (!user && !isPublicRoute) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
