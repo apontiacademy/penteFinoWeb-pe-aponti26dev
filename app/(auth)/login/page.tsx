@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { Logomark } from '@/components/Logomark'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -54,7 +55,8 @@ export default function LoginPage() {
         <div className="absolute top-1/3 -left-16 w-72 h-72 rounded-full bg-white/5 blur-3xl" />
         <div className="absolute bottom-1/4 right-0 w-56 h-56 rounded-full bg-accent/25 blur-2xl" />
 
-        <div className="relative">
+        <div className="relative flex items-center gap-2">
+          <Logomark className="w-7 h-7 text-white" />
           <span className="text-2xl font-bold tracking-tight">Aponti</span>
         </div>
 
@@ -94,8 +96,11 @@ export default function LoginPage() {
       <div className="flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-sm space-y-8">
           <div className="space-y-1">
-            <div className="lg:hidden text-2xl font-bold bg-gradient-to-r from-primary to-[oklch(0.710_0.191_294)] bg-clip-text text-transparent mb-4">
-              Aponti
+            <div className="lg:hidden flex items-center gap-2 mb-4">
+              <Logomark className="w-7 h-7 text-primary" />
+              <span className="text-2xl font-bold bg-gradient-to-r from-primary to-[oklch(0.710_0.191_294)] bg-clip-text text-transparent">
+                Aponti
+              </span>
             </div>
             <h2 className="text-2xl font-bold text-foreground">Entrar</h2>
             <p className="text-muted-foreground text-sm">
