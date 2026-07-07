@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -33,7 +34,7 @@ export default function LoginPage() {
       return
     }
 
-    router.push('/auditorias')
+    router.push('/dashboard')
     router.refresh()
   }
 
@@ -139,6 +140,14 @@ export default function LoginPage() {
                 >
                   {mostrarSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
+              </div>
+              <div className="flex justify-end">
+                <Link
+                  href="/esqueci-senha"
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                >
+                  Esqueci minha senha
+                </Link>
               </div>
             </div>
 
