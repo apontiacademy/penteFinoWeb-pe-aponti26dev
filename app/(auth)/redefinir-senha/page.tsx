@@ -20,7 +20,7 @@ export default function RedefinirSenhaPage() {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) {
-        router.replace('/esqueci-senha')
+        router.replace('/esqueci-senha?erro=link-invalido')
         return
       }
       setVerificandoSessao(false)
