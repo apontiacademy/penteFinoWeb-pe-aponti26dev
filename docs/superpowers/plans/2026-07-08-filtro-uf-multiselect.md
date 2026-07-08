@@ -397,3 +397,21 @@ EOF
 - **Spec coverage:** Seção 1 (fonte de dados) → Task 1 (`derivarUfsDisponiveis`) + Task 2 Step 3. Seção 2 (estado/matching) → Task 2. Seção 3 (componente Select) → Task 3. Seção 4 (casos de borda) → cobertos pelos testes da Task 1 (lista vazia, dedupe, exclusão de vazio) e pelo checklist manual da Task 4 (troca de aba, clearFilters). Nenhuma lacuna encontrada.
 - **Placeholder scan:** nenhum "TBD"/"similar to Task N" — todo código está completo em cada step.
 - **Type consistency:** `filters.ufs: string[]` (Task 2 Step 2) usado consistentemente em `handleUfsChange` (Step 4), `clearFilters` (Step 5), `hasFilters` (Step 6), predicado de filtro (Step 7) e no JSX (Task 3 Step 2). `derivarUfsDisponiveis`/`formatarResumoUfs` (Task 1) importados e usados com as mesmas assinaturas em Task 2/3.
+
+## Revisão pós-implementação: `Select` → `Combobox` com chips
+
+Depois que a Task 3 (Select multi-seleção) passou pelas duas revisões e foi
+aprovada, o usuário viu o resultado e não gostou do visual do dropdown (resumo
+truncado tipo "PE, SP +2" no trigger). A Task 3 foi refeita usando
+`components/ui/combobox.tsx` (instalado via `npx shadcn@latest add combobox`) no
+padrão oficial de multi-seleção com chips (`Combobox multiple` +
+`ComboboxChips`/`ComboboxChip`/`ComboboxChipsInput` ancorados a `ComboboxContent`
+via `useComboboxAnchor()`), removendo o `Select`/`SelectTrigger`/`SelectContent`/
+`SelectItem`/`SelectValue` da Task 3 original. `formatarResumoUfs` (Task 1) ficou sem
+uso com o novo padrão de chips (que não trunca, mostra cada UF selecionada
+individualmente) e foi removido de `audit-result-table-utils.ts`/`.test.ts` junto com
+seus 4 testes — `derivarUfsDisponiveis` continua igual, agora alimentando o `items`
+do `Combobox` em vez do `.map` manual de `SelectItem`s. Ver a seção "Revisão" na spec
+(`docs/superpowers/specs/2026-07-08-filtro-uf-multiselect-design.md`) para o detalhe
+completo. `tsc --noEmit`, `npm run test` (30/30) e `npm run build` todos limpos após a
+troca.

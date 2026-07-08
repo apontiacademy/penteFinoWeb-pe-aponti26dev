@@ -5,17 +5,24 @@ Issue: [#31](https://github.com/apontiacademy/penteFinoWeb-pe-aponti26dev/issues
 ## Contexto
 
 O filtro de UF em `components/AuditResultTable.tsx` é hoje um `<Input>` de texto livre
-com correspondência por substring (linha 107), sem validação contra UFs válidas. O
-projeto já tem um `Select` estilizado (`components/ui/select.tsx`, base
-`@base-ui/react/select`) que hoje não é usado em lugar nenhum do app, e o Base UI
-Select suporta nativamente `multiple` (`value`/`onValueChange` tipados como array,
-popup permanece aberto entre cliques nesse modo — confirmado em
-`node_modules/@base-ui/react/select/root/SelectRoot.d.ts`).
+com correspondência por substring (linha 107), sem validação contra UFs válidas.
 
 ## Objetivo
 
-Substituir o filtro de texto de UF por um dropdown de múltipla seleção, sem precisar
-de um componente novo.
+Substituir o filtro de texto de UF por um multi-seleção.
+
+## Revisão: `Select` → `Combobox` com chips
+
+A primeira versão desta spec usava `components/ui/select.tsx` (`Select multiple`),
+que já existia no projeto e suporta múltipla seleção nativamente via Base UI. Depois
+de implementado e revisado, o usuário achou o resultado visual insatisfatório (resumo
+truncado tipo "PE, SP +2" no trigger). Foi trocado por `components/ui/combobox.tsx`
+(instalado via `npx shadcn@latest add combobox`, também baseado em
+`@base-ui/react/combobox`, que suporta `multiple` do mesmo jeito que o `Select`), no
+padrão "chips": cada UF selecionada aparece como uma chip removível dentro do próprio
+campo, sem truncamento nem resumo textual — ver seção 3 abaixo (versão atual).
+`formatarResumoUfs` (usado só para formatar o resumo truncado do `Select`) foi
+removido por ficar sem uso.
 
 ## 1. Fonte de dados das opções
 
@@ -64,23 +71,50 @@ Predicado de filtro (linhas 100-110): a condição de UF passa a ser
 `normalizarUF` em `lib/pente-fino.ts`) e as opções vêm diretamente dos valores
 presentes nos dados.
 
-## 3. Componente `Select` multi-seleção
+## 3. Componente `Combobox` multi-seleção com chips (versão atual)
 
-Reaproveita `components/ui/select.tsx` sem alterar `Select`, `SelectContent`,
-`SelectItem` ou `SelectSeparator` — a lib já suporta `multiple` nativamente:
+Usa `components/ui/combobox.tsx` (instalado via shadcn CLI, base
+`@base-ui/react/combobox`, que suporta `multiple` da mesma forma que o `Select`:
+`value`/`onValueChange` tipados como array). Segue o padrão oficial de exemplo do
+shadcn para combobox multi-seleção com chips:
 
-- `<Select multiple value={filters.ufs} onValueChange={handleUfsChange}>`
-- Um `<SelectItem value={uf}>{uf}</SelectItem>` por UF de `ufsDisponiveis`. O
-  checkmark (`ItemIndicator`) que o `SelectItem` já renderiza serve como indicador de
-  selecionado/não selecionado — não é preciso desenhar um checkbox customizado.
-- `SelectValue` com `children` como função para formatar o resumo exibido no trigger:
-  - 0 selecionados → placeholder "UF"
-  - 1 selecionado → a sigla (ex: "PE")
-  - 2 selecionados → "PE, SP"
-  - 3+ selecionados → as duas primeiras + `+N` do restante (ex: "PE, SP +2")
-- O trigger perde a largura fixa `w-20` do `Input` anterior (não cabe mais texto
-  variável) e passa a usar o `w-fit` padrão do `SelectTrigger`, com um `min-w` pequeno
-  para não colapsar quando vazio/placeholder.
+```tsx
+const ufsAnchor = useComboboxAnchor()
+
+<Combobox multiple items={ufsDisponiveis} value={filters.ufs} onValueChange={handleUfsChange}>
+  <ComboboxChips ref={ufsAnchor} className="min-w-28 text-sm">
+    <ComboboxValue>
+      {(values: string[]) => (
+        <>
+          {values.map((uf) => (
+            <ComboboxChip key={uf}>{uf}</ComboboxChip>
+          ))}
+          <ComboboxChipsInput placeholder="UF..." />
+        </>
+      )}
+    </ComboboxValue>
+  </ComboboxChips>
+  <ComboboxContent anchor={ufsAnchor}>
+    <ComboboxEmpty>Nenhuma UF encontrada.</ComboboxEmpty>
+    <ComboboxList>
+      {(uf: string) => (
+        <ComboboxItem key={uf} value={uf}>
+          {uf}
+        </ComboboxItem>
+      )}
+    </ComboboxList>
+  </ComboboxContent>
+</Combobox>
+```
+
+- Cada UF selecionada vira uma chip removível (`ComboboxChip`) dentro do próprio
+  campo — sem truncamento, sem resumo textual, sem componente/helper de formatação
+  (`formatarResumoUfs` foi removido; `derivarUfsDisponiveis` continua sendo usado,
+  agora como o `items` do `Combobox`).
+- O campo também funciona como busca: digitar filtra a lista de UFs no popup
+  (comportamento nativo do Base UI Combobox).
+- `useComboboxAnchor()` cria a ref que ancora o popup (`ComboboxContent`) ao container
+  das chips (`ComboboxChips`), conforme o padrão de composição do Base UI Combobox.
 
 ## 4. Casos de borda
 

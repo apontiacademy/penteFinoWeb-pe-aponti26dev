@@ -14,13 +14,18 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { derivarUfsDisponiveis, formatarResumoUfs } from './audit-result-table-utils'
+  Combobox,
+  ComboboxChips,
+  ComboboxChip,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxValue,
+  useComboboxAnchor,
+} from '@/components/ui/combobox'
+import { derivarUfsDisponiveis } from './audit-result-table-utils'
 import {
   Download,
   Users,
@@ -78,6 +83,7 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
     () => derivarUfsDisponiveis(naoFeitos, feitos),
     [naoFeitos, feitos]
   )
+  const ufsAnchor = useComboboxAnchor()
   const isNF = modo === 'nao_feitos'
 
   function handleModo(v: typeof modo) {
@@ -256,22 +262,30 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
           onChange={(e) => handleFilter('nome', e.target.value)}
           className="h-8 w-52 text-sm"
         />
-        <Select multiple value={filters.ufs} onValueChange={handleUfsChange}>
-          <SelectTrigger className="min-w-20">
-            <SelectValue>
-              {(value: string[]) =>
-                formatarResumoUfs([...value].sort((a, b) => a.localeCompare(b, 'pt-BR')))
-              }
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {ufsDisponiveis.map((uf) => (
-              <SelectItem key={uf} value={uf}>
-                {uf}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Combobox multiple items={ufsDisponiveis} value={filters.ufs} onValueChange={handleUfsChange}>
+          <ComboboxChips ref={ufsAnchor} className="min-w-28 text-sm">
+            <ComboboxValue>
+              {(values: string[]) => (
+                <>
+                  {values.map((uf) => (
+                    <ComboboxChip key={uf}>{uf}</ComboboxChip>
+                  ))}
+                  <ComboboxChipsInput placeholder="UF..." />
+                </>
+              )}
+            </ComboboxValue>
+          </ComboboxChips>
+          <ComboboxContent anchor={ufsAnchor}>
+            <ComboboxEmpty>Nenhuma UF encontrada.</ComboboxEmpty>
+            <ComboboxList>
+              {(uf: string) => (
+                <ComboboxItem key={uf} value={uf}>
+                  {uf}
+                </ComboboxItem>
+              )}
+            </ComboboxList>
+          </ComboboxContent>
+        </Combobox>
         <Input
           placeholder="Empresa..."
           value={filters.empresa}
