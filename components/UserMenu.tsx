@@ -1,7 +1,7 @@
 'use client'
 
 import { useTheme } from 'next-themes'
-import { Moon, Sun, LogOut, ChevronDown, Settings } from 'lucide-react'
+import { Moon, Sun, LogOut, ChevronDown, Settings, User } from 'lucide-react'
 import Link from 'next/link'
 import {
   DropdownMenu,
@@ -60,6 +60,14 @@ export function UserMenu({ name, email, isAdmin }: Props) {
           </div>
 
           <DropdownMenuSeparator />
+
+          <DropdownMenuItem
+            render={<Link href="/perfil" />}
+            className="gap-2 cursor-pointer"
+          >
+            <User className="w-4 h-4" />
+            Minha conta
+          </DropdownMenuItem>
 
           {isAdmin && (
             <DropdownMenuItem
