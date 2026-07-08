@@ -192,6 +192,25 @@ export async function POST() {
 }
 ```
 
+### Risco conhecido: rate limit de login compartilhado
+
+Mover o login para o servidor significa que toda tentativa de login passa a chegar
+ao Supabase Auth vindo do IP de egress do servidor Next.js, não do IP real de cada
+usuário. O rate limit "sign-ups e sign-ins" do Supabase (Authentication → Rate
+Limits) é por IP — antes, cada usuário tinha sua própria cota; agora essa cota é
+**compartilhada entre todos os usuários do app**. Verificado no dashboard do projeto
+(`aponti-pente-fino`): o valor padrão era 30 requisições/5min. Um pico normal de uso
+(ex: vários usuários logando de manhã, cada um com 1-2 tentativas por erro de
+digitação) já se aproxima desse teto compartilhado, bloqueando gente legítima sem
+que exista nenhum ataque.
+
+Mitigação aplicada: o valor foi aumentado para **100 requisições/5min** diretamente
+no dashboard do Supabase (mudança de configuração, fora do código/desta PR) —
+suficiente para o tamanho atual do time (poucos usuários) sem enfraquecer demais a
+proteção contra força bruta. Um rate limit próprio da aplicação (por IP real do
+request, com store durável tipo Redis/KV) resolveria isso de forma mais robusta,
+mas é escopo maior que esta issue de logging — fica como possível follow-up.
+
 ## 4. Tela de administração `/configuracoes/logs`
 
 Rota **aninhada em `/configuracoes`**, já coberta pelo prefixo `/configuracoes` em
