@@ -5,12 +5,18 @@ import { createClient } from '@/lib/supabase/server'
 export async function atualizarPerfil(data: {
   nome: string
   telefone: string
+  cargo: string
+  funcao: string
 }): Promise<{ error?: string }> {
   const nome = data.nome.trim()
   const telefone = data.telefone.trim()
+  const cargo = data.cargo.trim()
+  const funcao = data.funcao.trim()
 
   if (nome.length > 100) return { error: 'Nome deve ter no máximo 100 caracteres' }
   if (telefone.length > 20) return { error: 'Telefone deve ter no máximo 20 caracteres' }
+  if (cargo.length > 100) return { error: 'Cargo deve ter no máximo 100 caracteres' }
+  if (funcao.length > 100) return { error: 'Função deve ter no máximo 100 caracteres' }
 
   const supabase = await createClient()
   const {
@@ -20,7 +26,7 @@ export async function atualizarPerfil(data: {
   if (!user) return { error: 'Sessão inválida' }
 
   const { error } = await supabase.auth.updateUser({
-    data: { ...user.user_metadata, nome, telefone },
+    data: { ...user.user_metadata, nome, telefone, cargo, funcao },
   })
 
   if (error) return { error: 'Não foi possível atualizar os dados. Tente novamente.' }

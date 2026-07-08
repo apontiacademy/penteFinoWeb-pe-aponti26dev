@@ -7,9 +7,23 @@ import { Label } from '@/components/ui/label'
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
 import { atualizarPerfil } from '@/app/(protected)/perfil/actions'
 
-export function PerfilForm({ nome: nomeInicial, telefone: telefoneInicial }: { nome: string; telefone: string }) {
+type PerfilFormProps = {
+  nome: string
+  telefone: string
+  cargo: string
+  funcao: string
+}
+
+export function PerfilForm({
+  nome: nomeInicial,
+  telefone: telefoneInicial,
+  cargo: cargoInicial,
+  funcao: funcaoInicial,
+}: PerfilFormProps) {
   const [nome, setNome] = useState(nomeInicial)
   const [telefone, setTelefone] = useState(telefoneInicial)
+  const [cargo, setCargo] = useState(cargoInicial)
+  const [funcao, setFuncao] = useState(funcaoInicial)
   const [erro, setErro] = useState('')
   const [sucesso, setSucesso] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -20,7 +34,7 @@ export function PerfilForm({ nome: nomeInicial, telefone: telefoneInicial }: { n
     setSucesso(false)
     setLoading(true)
 
-    const result = await atualizarPerfil({ nome, telefone })
+    const result = await atualizarPerfil({ nome, telefone, cargo, funcao })
 
     setLoading(false)
 
@@ -53,6 +67,26 @@ export function PerfilForm({ nome: nomeInicial, telefone: telefoneInicial }: { n
             value={telefone}
             onChange={(e) => setTelefone(e.target.value)}
             placeholder="(81) 99999-9999"
+            className="h-10"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="cargo">Cargo</Label>
+          <Input
+            id="cargo"
+            value={cargo}
+            onChange={(e) => setCargo(e.target.value)}
+            placeholder="ex: Coordenador"
+            className="h-10"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="funcao">Função</Label>
+          <Input
+            id="funcao"
+            value={funcao}
+            onChange={(e) => setFuncao(e.target.value)}
+            placeholder="ex: Operações"
             className="h-10"
           />
         </div>

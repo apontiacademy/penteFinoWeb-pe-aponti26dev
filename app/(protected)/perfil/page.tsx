@@ -15,6 +15,8 @@ export default async function PerfilPage() {
 
   const nome = (user.user_metadata?.nome as string | undefined) ?? ''
   const telefone = (user.user_metadata?.telefone as string | undefined) ?? ''
+  const cargo = (user.user_metadata?.cargo as string | undefined) ?? ''
+  const funcao = (user.user_metadata?.funcao as string | undefined) ?? ''
 
   return (
     <div className="space-y-6">
@@ -33,10 +35,10 @@ export default async function PerfilPage() {
       <Card className="shadow-sm border-border/60">
         <CardHeader>
           <CardTitle>Dados pessoais</CardTitle>
-          <CardDescription>Nome e telefone exibidos no seu perfil.</CardDescription>
+          <CardDescription>Nome, telefone, cargo e função exibidos no seu perfil.</CardDescription>
         </CardHeader>
         <CardContent>
-          <PerfilForm nome={nome} telefone={telefone} />
+          <PerfilForm nome={nome} telefone={telefone} cargo={cargo} funcao={funcao} />
         </CardContent>
       </Card>
 
