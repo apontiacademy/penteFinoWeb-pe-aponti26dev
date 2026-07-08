@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { AlertCircle, Loader2 } from 'lucide-react'
 
@@ -75,9 +75,8 @@ export default function RedefinirSenhaPage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="senha">Nova senha</Label>
-            <Input
+            <PasswordInput
               id="senha"
-              type="password"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               required
@@ -89,9 +88,8 @@ export default function RedefinirSenhaPage() {
 
           <div className="space-y-2">
             <Label htmlFor="confirmarSenha">Confirmar senha</Label>
-            <Input
+            <PasswordInput
               id="confirmarSenha"
-              type="password"
               value={confirmarSenha}
               onChange={(e) => setConfirmarSenha(e.target.value)}
               required
