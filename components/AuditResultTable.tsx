@@ -13,6 +13,13 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { derivarUfsDisponiveis, formatarResumoUfs } from './audit-result-table-utils'
 import {
   Download,
@@ -249,12 +256,22 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
           onChange={(e) => handleFilter('nome', e.target.value)}
           className="h-8 w-52 text-sm"
         />
-        <Input
-          placeholder="UF"
-          value={filters.uf}
-          onChange={(e) => handleFilter('uf', e.target.value)}
-          className="h-8 w-20 text-sm"
-        />
+        <Select multiple value={filters.ufs} onValueChange={handleUfsChange}>
+          <SelectTrigger className="min-w-20">
+            <SelectValue>
+              {(value: string[]) =>
+                formatarResumoUfs([...value].sort((a, b) => a.localeCompare(b, 'pt-BR')))
+              }
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {ufsDisponiveis.map((uf) => (
+              <SelectItem key={uf} value={uf}>
+                {uf}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Input
           placeholder="Empresa..."
           value={filters.empresa}
