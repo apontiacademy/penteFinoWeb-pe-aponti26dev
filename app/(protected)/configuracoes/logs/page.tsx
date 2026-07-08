@@ -37,7 +37,8 @@ export default async function LogsPage({
   searchParams: Promise<{ page?: string }>
 }) {
   const { page: pageParam } = await searchParams
-  const page = Math.max(1, Number(pageParam) || 1)
+  const parsedPage = Math.floor(Number(pageParam))
+  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1
 
   const supabase = await createClient()
   const {
@@ -57,6 +58,7 @@ export default async function LogsPage({
 
   const rows = (logs ?? []) as LogRow[]
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PER_PAGE))
+  const safePage = Math.min(page, totalPages)
 
   return (
     <div className="space-y-6">
@@ -131,26 +133,26 @@ export default async function LogsPage({
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
               <span className="text-xs text-muted-foreground tabular-nums">
-                Página {page} de {totalPages}
+                Página {safePage} de {totalPages}
               </span>
               <div className="flex items-center gap-1.5">
-                {page === 1 ? (
+                {safePage === 1 ? (
                   <Button variant="outline" size="icon" className="h-7 w-7" disabled>
                     <ChevronLeft className="w-3.5 h-3.5" />
                   </Button>
                 ) : (
-                  <Link href={`/configuracoes/logs?page=${page - 1}`}>
+                  <Link href={`/configuracoes/logs?page=${safePage - 1}`}>
                     <Button variant="outline" size="icon" className="h-7 w-7">
                       <ChevronLeft className="w-3.5 h-3.5" />
                     </Button>
                   </Link>
                 )}
-                {page === totalPages ? (
+                {safePage === totalPages ? (
                   <Button variant="outline" size="icon" className="h-7 w-7" disabled>
                     <ChevronRight className="w-3.5 h-3.5" />
                   </Button>
                 ) : (
-                  <Link href={`/configuracoes/logs?page=${page + 1}`}>
+                  <Link href={`/configuracoes/logs?page=${safePage + 1}`}>
                     <Button variant="outline" size="icon" className="h-7 w-7">
                       <ChevronRight className="w-3.5 h-3.5" />
                     </Button>
