@@ -18,7 +18,7 @@ export async function criarUsuario(
   formData: FormData
 ) {
   try {
-    await verificarAdmin()
+    const admin = await verificarAdmin()
 
     const email = formData.get('email') as string
     const senha = formData.get('senha') as string
@@ -42,7 +42,6 @@ export async function criarUsuario(
 
     if (error) return { error: error.message }
 
-    const admin = await verificarAdmin()
     await registrarLog({
       userId: admin.id,
       userEmail: admin.email!,
