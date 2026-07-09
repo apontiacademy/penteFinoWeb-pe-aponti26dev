@@ -195,21 +195,21 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
           <div className="text-xs text-muted-foreground mt-0.5">alunos</div>
         </div>
 
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-center">
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 dark:border-amber-500/40 dark:bg-amber-500/15 p-4 text-center">
           <div className="flex items-center justify-center gap-1.5 mb-1.5">
-            <Clock className="w-3.5 h-3.5 text-amber-600" />
-            <span className="text-xs font-medium text-amber-700">Parcialmente feitos</span>
+            <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" />
+            <span className="text-xs font-medium text-amber-700 dark:text-amber-400">Parcialmente feitos</span>
           </div>
-          <div className="text-2xl font-bold tabular-nums text-amber-700">{parcial}</div>
+          <div className="text-2xl font-bold tabular-nums text-amber-700 dark:text-amber-400">{parcial}</div>
           <div className="text-xs text-muted-foreground mt-0.5">{taxaParcial}% dos alunos</div>
         </div>
 
-        <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-center">
+        <div className="rounded-xl border border-green-500/30 bg-green-500/10 dark:border-green-500/40 dark:bg-green-500/15 p-4 text-center">
           <div className="flex items-center justify-center gap-1.5 mb-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
-            <span className="text-xs font-medium text-green-700">Completamente feitos</span>
+            <CheckCircle2 className="w-3.5 h-3.5 text-green-600 dark:text-green-500" />
+            <span className="text-xs font-medium text-green-700 dark:text-green-400">Completamente feitos</span>
           </div>
-          <div className="text-2xl font-bold tabular-nums text-green-700">{semAusencias}</div>
+          <div className="text-2xl font-bold tabular-nums text-green-700 dark:text-green-400">{semAusencias}</div>
           <div className="text-xs text-muted-foreground mt-0.5">{taxaCompleto}% dos alunos</div>
         </div>
       </div>
