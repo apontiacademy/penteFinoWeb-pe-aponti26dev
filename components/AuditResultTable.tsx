@@ -25,14 +25,22 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from '@/components/ui/combobox'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from '@/components/ui/pagination'
+import { paginasVisiveis } from '@/lib/pagination'
 import { derivarUfsDisponiveis } from './audit-result-table-utils'
 import {
   Download,
   Users,
   AlertTriangle,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
@@ -464,29 +472,56 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
         </p>
 
         {totalPages > 1 && (
-          <div className="flex items-center gap-1.5">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={safePage === 1}
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-            </Button>
-            <span className="text-xs text-muted-foreground px-1 tabular-nums">
-              {safePage} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={safePage === totalPages}
-            >
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Button>
-          </div>
+          <Pagination className="mx-0 w-auto justify-end">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  text="Anterior"
+                  aria-disabled={safePage === 1}
+                  tabIndex={safePage === 1 ? -1 : undefined}
+                  onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                    e.preventDefault()
+                    setPage((p) => Math.max(1, p - 1))
+                  }}
+                  className={safePage === 1 ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
+              {paginasVisiveis(safePage, totalPages).map((item, i) =>
+                item === 'ellipsis' ? (
+                  <PaginationItem key={`e${i}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={item}>
+                    <PaginationLink
+                      href="#"
+                      isActive={item === safePage}
+                      onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                        e.preventDefault()
+                        setPage(item)
+                      }}
+                    >
+                      {item}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  text="Próxima"
+                  aria-disabled={safePage === totalPages}
+                  tabIndex={safePage === totalPages ? -1 : undefined}
+                  onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                    e.preventDefault()
+                    setPage((p) => Math.min(totalPages, p + 1))
+                  }}
+                  className={safePage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         )}
       </div>
     </div>
