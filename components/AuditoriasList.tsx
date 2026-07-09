@@ -104,6 +104,9 @@ export function AuditoriasList({
             <PaginationItem>
               <PaginationPrevious
                 href={`/auditorias?page=${currentPage - 1}`}
+                text="Anterior"
+                aria-disabled={currentPage === 1}
+                tabIndex={currentPage === 1 ? -1 : undefined}
                 className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
               />
             </PaginationItem>
@@ -126,6 +129,9 @@ export function AuditoriasList({
             <PaginationItem>
               <PaginationNext
                 href={`/auditorias?page=${currentPage + 1}`}
+                text="Próxima"
+                aria-disabled={currentPage === totalPages}
+                tabIndex={currentPage === totalPages ? -1 : undefined}
                 className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
               />
             </PaginationItem>
