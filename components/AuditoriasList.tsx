@@ -2,6 +2,16 @@ import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { ChevronRight, ClipboardList } from 'lucide-react'
 import { TRIGGER_INFO } from '@/lib/trigger-info'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from '@/components/ui/pagination'
+import { paginasVisiveis } from '@/lib/pagination'
 
 type Auditoria = {
   id: string
@@ -10,7 +20,21 @@ type Auditoria = {
   relatorios_incluidos: string[]
 }
 
-export function AuditoriasList({ auditorias }: { auditorias: Auditoria[] }) {
+type Props = {
+  auditorias: Auditoria[]
+  totalCount: number
+  offset: number
+  currentPage: number
+  totalPages: number
+}
+
+export function AuditoriasList({
+  auditorias,
+  totalCount,
+  offset,
+  currentPage,
+  totalPages,
+}: Props) {
   if (!auditorias.length) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -30,47 +54,90 @@ export function AuditoriasList({ auditorias }: { auditorias: Auditoria[] }) {
   }
 
   return (
-    <ul className="space-y-2">
-      {auditorias.map((a, idx) => {
-        const info = TRIGGER_INFO[a.trigger_type]
-        const Icon = info.icon
-        return (
-          <li key={a.id}>
-            <Link
-              href={`/auditorias/${a.id}`}
-              className="group flex items-center justify-between rounded-xl border border-border/60 bg-card px-4 py-3.5 hover:border-primary/40 hover:shadow-sm transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${info.iconClass}`}
-                >
-                  <Icon className="w-4 h-4" />
+    <div className="space-y-4">
+      <ul className="space-y-2">
+        {auditorias.map((a, idx) => {
+          const info = TRIGGER_INFO[a.trigger_type]
+          const Icon = info.icon
+          return (
+            <li key={a.id}>
+              <Link
+                href={`/auditorias/${a.id}`}
+                className="group flex items-center justify-between rounded-xl border border-border/60 bg-card px-4 py-3.5 hover:border-primary/40 hover:shadow-sm transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${info.iconClass}`}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </div>
+
+                  <div>
+                    <p className="font-medium text-sm group-hover:text-primary transition-colors">
+                      Auditoria #{totalCount - (offset + idx)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {new Date(a.created_at).toLocaleString('pt-BR', {
+                        timeZone: 'America/Sao_Paulo',
+                      })}{' '}
+                      ·{' '}
+                      {a.relatorios_incluidos.length} relatório(s)
+                    </p>
+                  </div>
                 </div>
 
-                <div>
-                  <p className="font-medium text-sm group-hover:text-primary transition-colors">
-                    Auditoria #{auditorias.length - idx}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {new Date(a.created_at).toLocaleString('pt-BR', {
-                      timeZone: 'America/Sao_Paulo',
-                    })}{' '}
-                    ·{' '}
-                    {a.relatorios_incluidos.length} relatório(s)
-                  </p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className={`text-xs border ${info.badgeClass}`}>
+                    {info.label}
+                  </Badge>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0" />
                 </div>
-              </div>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
 
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className={`text-xs border ${info.badgeClass}`}>
-                  {info.label}
-                </Badge>
-                <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0" />
-              </div>
-            </Link>
-          </li>
-        )
-      })}
-    </ul>
+      {totalPages > 1 && (
+        <Pagination className="mx-0 w-auto justify-end">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href={`/auditorias?page=${currentPage - 1}`}
+                text="Anterior"
+                aria-disabled={currentPage === 1}
+                tabIndex={currentPage === 1 ? -1 : undefined}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+            {paginasVisiveis(currentPage, totalPages).map((item, i) =>
+              item === 'ellipsis' ? (
+                <PaginationItem key={`e${i}`}>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              ) : (
+                <PaginationItem key={item}>
+                  <PaginationLink
+                    href={`/auditorias?page=${item}`}
+                    isActive={item === currentPage}
+                  >
+                    {item}
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            )}
+            <PaginationItem>
+              <PaginationNext
+                href={`/auditorias?page=${currentPage + 1}`}
+                text="Próxima"
+                aria-disabled={currentPage === totalPages}
+                tabIndex={currentPage === totalPages ? -1 : undefined}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
+    </div>
   )
 }

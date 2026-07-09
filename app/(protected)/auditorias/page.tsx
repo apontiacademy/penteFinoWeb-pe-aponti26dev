@@ -3,12 +3,33 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { AuditoriasList } from '@/components/AuditoriasList'
 import { BarChart3 } from 'lucide-react'
 
-export default async function AuditoriasPage() {
+const PER_PAGE = 15
+
+export default async function AuditoriasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>
+}) {
+  const { page: pageParam } = await searchParams
+  const parsedPage = Math.floor(Number(pageParam))
+  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1
+
   const supabase = await createClient()
+
+  const { count } = await supabase
+    .from('auditorias')
+    .select('*', { count: 'exact', head: true })
+
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PER_PAGE))
+  const safePage = Math.min(page, totalPages)
+  const from = (safePage - 1) * PER_PAGE
+  const to = from + PER_PAGE - 1
+
   const { data: auditorias } = await supabase
     .from('auditorias')
     .select('id, created_at, trigger_type, relatorios_incluidos')
     .order('created_at', { ascending: false })
+    .range(from, to)
 
   return (
     <div className="space-y-6">
@@ -30,11 +51,17 @@ export default async function AuditoriasPage() {
             Histórico
           </CardTitle>
           <CardDescription>
-            {auditorias?.length ?? 0} auditoria(s) gerada(s)
+            {count ?? 0} auditoria(s) gerada(s)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <AuditoriasList auditorias={auditorias ?? []} />
+          <AuditoriasList
+            auditorias={auditorias ?? []}
+            totalCount={count ?? 0}
+            offset={from}
+            currentPage={safePage}
+            totalPages={totalPages}
+          />
         </CardContent>
       </Card>
     </div>
