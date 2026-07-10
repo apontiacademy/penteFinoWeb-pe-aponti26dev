@@ -1,6 +1,15 @@
 import { SendEmailCommand } from '@aws-sdk/client-sesv2'
 import { createSesClient } from '@/lib/ses'
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 export async function enviarSenhaPorEmail(params: {
   email: string
   nome: string
@@ -9,13 +18,16 @@ export async function enviarSenhaPorEmail(params: {
   const ses = createSesClient()
   const loginUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/login`
 
+  const nomeEscapado = escapeHtml(params.nome)
+  const emailEscapado = escapeHtml(params.email)
+
   const html = `
     <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
       <h2>Bem-vindo(a) ao Pente Fino</h2>
-      <p>Olá${params.nome ? `, ${params.nome}` : ''}! Uma conta foi criada para você no
+      <p>Olá${nomeEscapado ? `, ${nomeEscapado}` : ''}! Uma conta foi criada para você no
       sistema de auditoria de relatórios da Aponti Academy.</p>
       <p>
-        <strong>Email:</strong> ${params.email}<br />
+        <strong>Email:</strong> ${emailEscapado}<br />
         <strong>Senha temporária:</strong>
         <code style="background:#f4f4f5;padding:2px 6px;border-radius:4px;">${params.senha}</code>
       </p>
