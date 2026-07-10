@@ -15,34 +15,41 @@ senha — nenhum permite enviar um texto arbitrário como "sua senha é: X").
 ## Objetivo
 
 Ao criar um usuário, gerar uma senha aleatória segura no lugar do campo digitado pelo admin, e
-enviar essa senha por email para o novo usuário via Resend.
+enviar essa senha por email para o novo usuário via AWS SES.
 
-## Decisão: Resend em vez dos recursos nativos do Supabase Auth
+## Decisão: AWS SES em vez dos recursos nativos do Supabase Auth
 
 Os fluxos de email do Supabase Auth (`inviteUserByEmail`, `resetPasswordForEmail`) são todos
 baseados em **link** — o destinatário clica e define a própria senha. Não é possível usá-los
 para enviar o texto de uma senha já gerada, que é exatamente o que a issue pede. Por isso, um
-provedor de email de propósito geral é necessário. Resend foi escolhido pela integração simples
-com Server Actions do Next.js e free tier suficiente para o volume deste projeto.
+provedor de email de propósito geral é necessário.
 
-O domínio de envio ainda não está verificado no Resend (confirmado com o usuário) — até lá, o
-remetente configurado em `RESEND_FROM_EMAIL` deve ser o domínio de teste do Resend
-(`onboarding@resend.dev`, que só entrega para o próprio email cadastrado na conta Resend). Isso
-é puramente uma questão de configuração (variável de ambiente), não exige mudança de código
-quando o domínio próprio for verificado.
+**AWS SES** (Simple Email Service) foi escolhido — não confundir com **AWS WorkMail**, que é um
+serviço de caixa de email hospedada (tipo Google Workspace), inadequado pra esse caso de uso de
+envio automatizado disparado pelo sistema. SES é a contraparte direta do papel que o Resend
+ocuparia: uma API de envio de email transacional.
+
+Contas novas de SES começam em **sandbox mode** — só é possível enviar para endereços de email
+individualmente verificados na conta AWS, até a Amazon aprovar um pedido de saída do sandbox
+("production access"), que costuma levar até 24h. Isso é puramente uma questão de configuração
+externa (painel da AWS), não exige mudança de código quando a conta sair do sandbox — equivalente
+ao caveat de domínio não verificado que existiria com qualquer provedor de email novo.
 
 ## 1. Nova dependência e variáveis de ambiente
 
-- `npm install resend`
-- `RESEND_API_KEY` — chave de API do Resend.
-- `RESEND_FROM_EMAIL` — endereço remetente (ex: `onboarding@resend.dev` até o domínio próprio
-  ser verificado; depois, algo como `naoresponda@aponti.com.br`).
+- `npm install @aws-sdk/client-sesv2`
+- `AWS_REGION` — região AWS onde o SES está configurado (ex: `us-east-1`).
+- `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` — credenciais de uma IAM user/role com permissão
+  `ses:SendEmail`. O AWS SDK v3 lê essas duas variáveis automaticamente (credential provider
+  chain padrão) — não é necessário passá-las explicitamente no código.
+- `SES_FROM_EMAIL` — endereço remetente verificado no SES (ex: `naoresponda@aponti.com.br`, ou
+  um endereço individual verificado enquanto a conta estiver em sandbox mode).
 - `NEXT_PUBLIC_SITE_URL` — URL de produção do sistema (ex: `https://pentefino.aponti.com.br`),
   usada para montar o link "Acessar o sistema" no corpo do email. Nova variável — o projeto hoje
   só usa `window.location.origin` no navegador (`components/EsqueciSenhaForm.tsx:24`), o que não
   funciona dentro de uma Server Action (sem acesso ao `window`).
 
-Essas três variáveis precisam ser configuradas pelo usuário em `.env.local` (e no ambiente de
+Essas variáveis precisam ser configuradas pelo usuário em `.env.local` (e no ambiente de
 produção) antes de testar o fluxo — não fazem parte desta spec definir os valores reais.
 
 ## 2. Gerador de senha — `lib/gerar-senha.ts` (novo)
@@ -86,60 +93,74 @@ conjunto permitido (regex); contém pelo menos 1 maiúscula, 1 minúscula, 1 nú
 várias execuções; chamadas sucessivas não geram a mesma senha (checagem de variedade, não de
 unicidade garantida).
 
-## 3. Envio de email — `lib/resend.ts` + `lib/email/enviar-senha-usuario.ts` (novos)
+## 3. Envio de email — `lib/ses.ts` + `lib/email/enviar-senha-usuario.ts` (novos)
 
-`lib/resend.ts` — factory simples, mesmo padrão de nomenclatura de `createServiceClient()` em
+`lib/ses.ts` — factory simples, mesmo padrão de nomenclatura de `createServiceClient()` em
 `lib/supabase/server.ts`:
 
 ```ts
-import { Resend } from 'resend'
+import { SESv2Client } from '@aws-sdk/client-sesv2'
 
-export function createResendClient() {
-  return new Resend(process.env.RESEND_API_KEY)
+export function createSesClient() {
+  return new SESv2Client({ region: process.env.AWS_REGION })
 }
 ```
 
-`lib/email/enviar-senha-usuario.ts` — monta o HTML e envia:
+`lib/email/enviar-senha-usuario.ts` — monta o HTML e envia. Diferença importante em relação a
+provedores como Resend: o SDK da AWS **lança exceção** em caso de falha, em vez de retornar
+`{ data, error }` — por isso o `try/catch`, mantendo a mesma interface de retorno
+(`Promise<{ error?: string }>`) que o resto do app (`criarUsuario`, seção 4) já espera:
 
 ```ts
-import { createResendClient } from '@/lib/resend'
+import { SendEmailCommand } from '@aws-sdk/client-sesv2'
+import { createSesClient } from '@/lib/ses'
 
 export async function enviarSenhaPorEmail(params: {
   email: string
   nome: string
   senha: string
 }): Promise<{ error?: string }> {
-  const resend = createResendClient()
+  const ses = createSesClient()
   const loginUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/login`
 
-  const { error } = await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL!,
-    to: params.email,
-    subject: 'Seu acesso ao Pente Fino',
-    html: `
-      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-        <h2>Bem-vindo(a) ao Pente Fino</h2>
-        <p>Olá${params.nome ? `, ${params.nome}` : ''}! Uma conta foi criada para você no
-        sistema de auditoria de relatórios da Aponti Academy.</p>
-        <p>
-          <strong>Email:</strong> ${params.email}<br />
-          <strong>Senha temporária:</strong>
-          <code style="background:#f4f4f5;padding:2px 6px;border-radius:4px;">${params.senha}</code>
-        </p>
-        <p>
-          <a href="${loginUrl}" style="display:inline-block;background:#000;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">
-            Acessar o sistema
-          </a>
-        </p>
-        <p style="color:#71717a;font-size:12px;">
-          Não compartilhe esta senha com ninguém. Se você não esperava este email, ignore-o.
-        </p>
-      </div>
-    `,
-  })
+  const html = `
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+      <h2>Bem-vindo(a) ao Pente Fino</h2>
+      <p>Olá${params.nome ? `, ${params.nome}` : ''}! Uma conta foi criada para você no
+      sistema de auditoria de relatórios da Aponti Academy.</p>
+      <p>
+        <strong>Email:</strong> ${params.email}<br />
+        <strong>Senha temporária:</strong>
+        <code style="background:#f4f4f5;padding:2px 6px;border-radius:4px;">${params.senha}</code>
+      </p>
+      <p>
+        <a href="${loginUrl}" style="display:inline-block;background:#000;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">
+          Acessar o sistema
+        </a>
+      </p>
+      <p style="color:#71717a;font-size:12px;">
+        Não compartilhe esta senha com ninguém. Se você não esperava este email, ignore-o.
+      </p>
+    </div>
+  `
 
-  if (error) return { error: error.message }
-  return {}
+  try {
+    await ses.send(
+      new SendEmailCommand({
+        FromEmailAddress: process.env.SES_FROM_EMAIL,
+        Destination: { ToAddresses: [params.email] },
+        Content: {
+          Simple: {
+            Subject: { Data: 'Seu acesso ao Pente Fino', Charset: 'UTF-8' },
+            Body: { Html: { Data: html, Charset: 'UTF-8' } },
+          },
+        },
+      })
+    )
+    return {}
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Erro ao enviar email' }
+  }
 }
 ```
 
@@ -261,8 +282,9 @@ por:
 
 ## Fora de escopo
 
-- **Verificação do domínio de envio no Resend** — configuração externa, feita pelo usuário fora
-  desta implementação; o código funciona com qualquer `RESEND_FROM_EMAIL` válido.
+- **Saída do sandbox mode do SES e verificação do domínio/email remetente** — configuração
+  externa, feita pelo usuário no painel da AWS fora desta implementação; o código funciona com
+  qualquer `SES_FROM_EMAIL` válido, verificado ou não.
 - **Forçar troca de senha no primeiro login** — já marcado na issue como nota não bloqueante,
   depende de uma issue futura de alteração de senha do usuário autenticado.
 - **Botão de copiar a senha** (clipboard) no aviso de falha de envio — o texto já fica
