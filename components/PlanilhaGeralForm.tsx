@@ -1,10 +1,11 @@
 'use client'
 
 import { useActionState, useRef, useState, useEffect } from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { UploadCloud, FileCheck2, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
+import { UploadCloud, FileCheck2, Loader2 } from 'lucide-react'
 import { uploadPlanilhaGeral } from '@/app/(protected)/configuracoes/actions'
 
 export function PlanilhaGeralForm() {
@@ -16,8 +17,11 @@ export function PlanilhaGeralForm() {
     if (state?.success) {
       formRef.current?.reset()
       setFileName(null)
+      toast.success('Planilha atualizada com sucesso!')
+    } else if (state?.error) {
+      toast.error(state.error)
     }
-  }, [state?.success])
+  }, [state])
 
   return (
     <form ref={formRef} action={action} className="space-y-4">
@@ -66,19 +70,6 @@ export function PlanilhaGeralForm() {
           onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
         />
       </div>
-
-      {state?.error && (
-        <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/8 border border-destructive/20 px-3 py-2.5 rounded-lg">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          {state.error}
-        </div>
-      )}
-      {state?.success && (
-        <div className="flex items-center gap-2 text-green-700 text-sm bg-green-50 border border-green-200 px-3 py-2.5 rounded-lg">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
-          Planilha atualizada com sucesso!
-        </div>
-      )}
 
       <Button type="submit" disabled={pending} className="gap-2">
         {pending ? (
