@@ -47,9 +47,16 @@ export function AdicionarRelatorioForm() {
     })
   }
 
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    if (!fileName) {
+      e.preventDefault()
+      toast.error('Selecione um arquivo CSV.')
+    }
+  }
+
   return (
     <>
-      <form ref={formRef} action={action} className="space-y-5">
+      <form ref={formRef} action={action} onSubmit={handleSubmit} className="space-y-5">
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="nome">Nome do relatório</Label>
@@ -111,7 +118,6 @@ export function AdicionarRelatorioForm() {
             name="arquivo"
             type="file"
             accept=".csv"
-            required
             disabled={pending}
             className="sr-only"
             onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}

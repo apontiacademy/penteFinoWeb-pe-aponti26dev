@@ -23,8 +23,15 @@ export function PlanilhaGeralForm() {
     }
   }, [state])
 
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    if (!fileName) {
+      e.preventDefault()
+      toast.error('Selecione um arquivo CSV.')
+    }
+  }
+
   return (
-    <form ref={formRef} action={action} className="space-y-4">
+    <form ref={formRef} action={action} onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label>Arquivo CSV</Label>
         <label
@@ -64,7 +71,6 @@ export function PlanilhaGeralForm() {
           name="arquivo"
           type="file"
           accept=".csv"
-          required
           disabled={pending}
           className="sr-only"
           onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
