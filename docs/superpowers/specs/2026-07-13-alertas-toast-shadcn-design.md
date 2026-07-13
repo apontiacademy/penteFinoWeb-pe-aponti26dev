@@ -2,6 +2,8 @@
 
 Data: 2026-07-13
 
+> **Nota pós-implementação:** esta spec foi escrita lendo `CriarUsuarioForm.tsx` na branch `feat/senha-aleatoria-email` (ainda não mesclada em `develop` quando esta branch foi criada). Por isso a linha de `CriarUsuarioForm.tsx` na tabela de escopo e a exceção 1 descrevem um fallback `emailFalhou`/senha gerada que **não existe** na base real desta branch (`develop`). A implementação foi corrigida para refletir o `CriarUsuarioForm.tsx` real (campo "Senha" manual, `<select>` nativo, sem exceção de caixa fixa — os dois casos viraram toast). Quando `feat/senha-aleatoria-email` for mesclada, o fallback `emailFalhou` deve ser revisitado separadamente para também usar caixa fixa, como esta spec originalmente previa.
+
 ## Contexto
 
 O app já tem o `Toaster` do shadcn (sonner) instalado, temático (light/dark) e montado globalmente em `app/layout.tsx`. Ele já é usado em um único lugar — `GerarAuditoriaButton.tsx` (`toast.success`/`toast.error`).
