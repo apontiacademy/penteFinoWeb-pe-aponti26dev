@@ -31,11 +31,22 @@ export async function adicionarRelatorios(
     const user = await verificarAdmin()
     const supabase = await createClient()
 
-    const arquivos = formData
-      .getAll('arquivos')
-      .filter((f): f is File => f instanceof File && f.size > 0)
+    const arquivosBrutos = formData.getAll('arquivos').filter((f): f is File => f instanceof File)
+    if (arquivosBrutos.length === 0) return { error: 'Selecione ao menos um arquivo CSV.' }
 
-    if (arquivos.length === 0) return { error: 'Selecione ao menos um arquivo CSV.' }
+    const sucesso: { id: string; nome: string }[] = []
+    const falhas: { nome: string; erro: string }[] = []
+    const arquivos: File[] = []
+
+    for (const f of arquivosBrutos) {
+      if (f.size === 0) {
+        falhas.push({ nome: f.name, erro: 'Arquivo vazio.' })
+      } else {
+        arquivos.push(f)
+      }
+    }
+
+    if (arquivos.length === 0) return { falhas }
 
     const { data: planilhas } = await supabase
       .from('planilha_geral')
@@ -51,15 +62,22 @@ export async function adicionarRelatorios(
       }
     }
 
-    const { count } = await supabase
+    const { data: relatoriosAtivos, error: errAtivos } = await supabase
       .from('relatorios')
-      .select('id', { count: 'exact', head: true })
+      .select('nome')
       .is('deleted_at', null)
 
-    let proximoNumero = (count ?? 0) + 1
+    if (errAtivos) {
+      return { error: `Erro ao consultar relatórios existentes: ${errAtivos.message}` }
+    }
 
-    const sucesso: { id: string; nome: string }[] = []
-    const falhas: { nome: string; erro: string }[] = []
+    const maiorNumero = (relatoriosAtivos ?? []).reduce((max, r) => {
+      const match = /^Relatório (\d+)$/.exec(r.nome)
+      const numero = match ? parseInt(match[1], 10) : 0
+      return Math.max(max, numero)
+    }, 0)
+
+    let proximoNumero = maiorNumero + 1
 
     for (const arquivo of arquivos) {
       const nome = `Relatório ${proximoNumero}`
