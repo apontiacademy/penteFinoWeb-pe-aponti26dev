@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { gerarAuditoria } from '@/lib/gerar-auditoria'
 import { registrarLog } from '@/lib/system-log'
+import { planilhaTemColuna } from '@/lib/pente-fino'
 
 async function verificarAdmin() {
   const supabase = await createClient()
@@ -32,6 +33,27 @@ export async function adicionarRelatorio(
 
     if (!nome || !semana) return { error: 'Preencha nome e semana.' }
     if (!arquivo || arquivo.size === 0) return { error: 'Selecione um arquivo CSV.' }
+
+    const { data: planilhas } = await supabase
+      .from('planilha_geral')
+      .select('id_coluna')
+      .order('uploaded_at', { ascending: false })
+      .limit(1)
+
+    const idColuna = planilhas?.[0]?.id_coluna
+    if (!idColuna) {
+      return {
+        error:
+          'Configure a coluna de identificador na planilha geral (/configuracoes) antes de anexar relatórios.',
+      }
+    }
+
+    const texto = await arquivo.text()
+    if (!planilhaTemColuna(texto, idColuna)) {
+      return {
+        error: `Este relatório não possui a coluna de identificador "${idColuna}" configurada na planilha geral.`,
+      }
+    }
 
     const relatorioId = crypto.randomUUID()
     const storagePath = `${relatorioId}/arquivo.csv`
