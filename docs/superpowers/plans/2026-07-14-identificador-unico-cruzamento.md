@@ -464,7 +464,6 @@ export function carregarAlunos(csvText: string, idColuna: string): Aluno[] {
 
   const headers = (meta.fields ?? []).map((h) => h.toLowerCase())
   const isFormatoA = headers.includes('residente')
-  const idKey = meta.fields?.find((f) => f === idColuna) ?? idColuna
 
   const vistos = new Set<string>()
   const alunos: Aluno[] = []
@@ -490,7 +489,7 @@ export function carregarAlunos(csvText: string, idColuna: string): Aluno[] {
     }
 
     const nomeNormalizado = normalizarNome(nomeCompleto)
-    const identificador = (row[idKey] ?? '').trim()
+    const identificador = (row[idColuna] ?? '').trim()
     if (!identificador || vistos.has(identificador)) continue
     vistos.add(identificador)
     alunos.push({ nomeCompleto, nomeNormalizado, identificador, estado, empresa })
@@ -498,7 +497,11 @@ export function carregarAlunos(csvText: string, idColuna: string): Aluno[] {
 
   return alunos
 }
+```
 
+**Correção pós-revisão final:** a versão original desta função calculava `idKey = meta.fields?.find((f) => f === idColuna) ?? idColuna`, dando a impressão de validar se a coluna existe no cabeçalho — mas `idKey` sempre resolvia para `idColuna` de qualquer forma (achado ou não), então era um no-op disfarçado de checagem. A revisão final apontou isso como confuso ao lado de `carregarRelatorio`/`extrairGruposRelatorio`, que fazem essa checagem de verdade. `carregarAlunos` já não precisa fazer essa validação internamente — `planilhaTemColuna` (Task 3) cobre esse caso antes de `carregarAlunos` ser chamado — então a linha foi simplificada para usar `idColuna` diretamente.
+
+```ts
 // Retorna null se a coluna de identificador configurada estiver ausente (arquivo inválido)
 export function carregarRelatorio(csvText: string, idColuna: string): Set<string> | null {
   const { data, meta } = Papa.parse<Record<string, string>>(csvText, {
@@ -869,8 +872,8 @@ Replace with:
     const arquivo = formData.get('arquivo') as File
     if (!arquivo || arquivo.size === 0) return { error: 'Selecione um arquivo CSV.' }
 
-    const idColuna = (formData.get('idColuna') as string | null)?.trim()
-    if (!idColuna) return { error: 'Selecione a coluna de identificador.' }
+    const idColuna = formData.get('idColuna') as string | null
+    if (!idColuna || !idColuna.trim()) return { error: 'Selecione a coluna de identificador.' }
 
     const planilhaId = crypto.randomUUID()
     const storagePath = `${planilhaId}/arquivo.csv`
@@ -887,6 +890,8 @@ Replace with:
       id_coluna: idColuna,
     })
 ```
+
+**Correção pós-revisão final:** a versão original desta task usava `?.trim()` no valor de `idColuna` antes de gravar. Isso é um bug: o `<Select>` no formulário oferece exatamente os nomes de coluna crus que vieram de `Papa.parse` (sem trim), e todas as checagens posteriores (`planilhaTemColuna`, `carregarRelatorio`, etc.) também comparam contra o cabeçalho cru do CSV, sem trim. Se o cabeçalho tiver espaços (ex: `" ID "`), o valor trimado gravado no banco (`"ID"`) nunca mais bate com o cabeçalho real do arquivo, e a coluna escolhida — que existe de fato — passa a ser reportada como ausente em todo anexo de relatório e geração de auditoria. A correção grava o valor exatamente como veio do formulário (que é sempre uma das opções do `<Select>`, nunca texto livre do usuário), só usando `.trim()` para a checagem de "vazio".
 
 - [ ] **Step 2: Substituir todo o conteúdo de `components/PlanilhaGeralForm.tsx`**
 
