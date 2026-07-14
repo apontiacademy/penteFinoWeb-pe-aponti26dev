@@ -3,6 +3,7 @@ import Papa from 'papaparse'
 export type Aluno = {
   nomeCompleto: string
   nomeNormalizado: string
+  identificador: string
   estado: string
   empresa: string
 }
@@ -104,7 +105,7 @@ export function parsearGrupos(valor: string): [string, string] {
   return ['', valor.trim()]
 }
 
-export function carregarAlunos(csvText: string): Aluno[] {
+export function carregarAlunos(csvText: string, idColuna: string): Aluno[] {
   const { data, meta } = Papa.parse<Record<string, string>>(csvText, {
     header: true,
     skipEmptyLines: true,
@@ -112,6 +113,7 @@ export function carregarAlunos(csvText: string): Aluno[] {
 
   const headers = (meta.fields ?? []).map((h) => h.toLowerCase())
   const isFormatoA = headers.includes('residente')
+  const idKey = meta.fields?.find((f) => f === idColuna) ?? idColuna
 
   const vistos = new Set<string>()
   const alunos: Aluno[] = []
@@ -137,48 +139,52 @@ export function carregarAlunos(csvText: string): Aluno[] {
     }
 
     const nomeNormalizado = normalizarNome(nomeCompleto)
-    if (!nomeNormalizado || vistos.has(nomeNormalizado)) continue
-    vistos.add(nomeNormalizado)
-    alunos.push({ nomeCompleto, nomeNormalizado, estado, empresa })
+    const identificador = (row[idKey] ?? '').trim()
+    if (!identificador || vistos.has(identificador)) continue
+    vistos.add(identificador)
+    alunos.push({ nomeCompleto, nomeNormalizado, identificador, estado, empresa })
   }
 
   return alunos
 }
 
-// Retorna null se coluna "Nome completo" ausente (arquivo inválido)
-export function carregarRelatorio(csvText: string): Set<string> | null {
+// Retorna null se a coluna de identificador configurada estiver ausente (arquivo inválido)
+export function carregarRelatorio(csvText: string, idColuna: string): Set<string> | null {
   const { data, meta } = Papa.parse<Record<string, string>>(csvText, {
     header: true,
     skipEmptyLines: true,
   })
 
-  const col = meta.fields?.find((f) => f === 'Nome completo')
+  const col = meta.fields?.find((f) => f === idColuna)
   if (!col) return null
 
   return new Set(
     data
-      .map((row) => normalizarNome(row[col] ?? ''))
+      .map((row) => (row[col] ?? '').trim())
       .filter(Boolean)
   )
 }
 
-export function extrairGruposRelatorio(csvText: string): Map<string, [string, string]> {
+export function extrairGruposRelatorio(
+  csvText: string,
+  idColuna: string
+): Map<string, [string, string]> {
   const { data, meta } = Papa.parse<Record<string, string>>(csvText, {
     header: true,
     skipEmptyLines: true,
   })
 
-  const nomeKey = meta.fields?.find((f) => f === 'Nome completo')
+  const idKey = meta.fields?.find((f) => f === idColuna)
   const gruposKey = meta.fields?.find((f) => f === 'Grupos')
   const grupos = new Map<string, [string, string]>()
 
-  if (!nomeKey || !gruposKey) return grupos
+  if (!idKey || !gruposKey) return grupos
 
   for (const row of data) {
-    const nomeNormalizado = normalizarNome(row[nomeKey] ?? '')
+    const identificador = (row[idKey] ?? '').trim()
     const valorGrupos = row[gruposKey]
-    if (!nomeNormalizado || !valorGrupos) continue
-    grupos.set(nomeNormalizado, parsearGrupos(valorGrupos))
+    if (!identificador || !valorGrupos) continue
+    grupos.set(identificador, parsearGrupos(valorGrupos))
   }
 
   return grupos
@@ -189,7 +195,7 @@ export function aplicarFallbackGrupos(
   grupos: Map<string, [string, string]>
 ): Aluno[] {
   return alunos.map((aluno) => {
-    const fallback = grupos.get(aluno.nomeNormalizado)
+    const fallback = grupos.get(aluno.identificador)
     if (!fallback) return aluno
     const [estadoFallback, empresaFallback] = fallback
     return {
@@ -206,7 +212,7 @@ export function calcularAusencias(
 ): ResultadoAusencia[] {
   return alunos.map((aluno) => {
     const ausentes = Object.entries(relatorios)
-      .filter(([, nomes]) => !nomes.has(aluno.nomeNormalizado))
+      .filter(([, ids]) => !ids.has(aluno.identificador))
       .map(([nome]) => nome)
 
     return {
@@ -225,7 +231,7 @@ export function calcularPresencas(
 ): ResultadoPresenca[] {
   return alunos.map((aluno) => {
     const feitos = Object.entries(relatorios)
-      .filter(([, nomes]) => nomes.has(aluno.nomeNormalizado))
+      .filter(([, ids]) => ids.has(aluno.identificador))
       .map(([nome]) => nome)
 
     return {
@@ -237,4 +243,3 @@ export function calcularPresencas(
     }
   })
 }
-

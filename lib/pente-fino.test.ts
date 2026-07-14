@@ -11,29 +11,39 @@ import {
   calcularPresencas,
 } from './pente-fino'
 
-// Formato A: coluna "residente" (estado fica vazio, empresa da coluna "empresa")
-const CSV_ALUNOS_A = `residente,empresa
-João  Silva,Empresa X
-maria souza,Empresa Y`
+// Formato A: coluna "residente" (estado fica vazio, empresa da coluna "empresa") + coluna de ID
+const CSV_ALUNOS_A = `ID,residente,empresa
+A1,João  Silva,Empresa X
+A2,maria souza,Empresa Y`
 
-// Formato B: colunas "Nome", "Sobrenome", "Grupos" — parsear_grupos extrai estado:empresa
-const CSV_ALUNOS_B = `Nome,Sobrenome,Grupos
-João,Silva,PE:Empresa X - 12345678/0001-99
-Maria,Souza,CE:Empresa Y - 98765432/0001-11`
+// Formato B: colunas "Nome", "Sobrenome", "Grupos" + coluna de ID
+const CSV_ALUNOS_B = `ID,Nome,Sobrenome,Grupos
+B1,João,Silva,PE:Empresa X - 12345678/0001-99
+B2,Maria,Souza,CE:Empresa Y - 98765432/0001-11`
 
-// Relatório com coluna "Nome completo" (exato)
-const CSV_REL_COM_COLUNA = `Nome completo,Email
-João Silva,joao@x.com
-Pedro Lima,pedro@y.com`
+// Planilha com identificador vazio numa linha
+const CSV_ALUNOS_ID_VAZIO = `ID,residente,empresa
+,João Silva,Empresa X
+A2,Maria Souza,Empresa Y`
 
-// Relatório sem a coluna obrigatória
+// Planilha com identificador duplicado
+const CSV_ALUNOS_ID_DUPLICADO = `ID,residente,empresa
+A1,João Silva,Empresa X
+A1,João Segundo,Empresa Z`
+
+// Relatório com coluna de ID e "Nome completo"
+const CSV_REL_COM_COLUNA = `ID,Nome completo,Email
+A1,João Silva,joao@x.com
+P1,Pedro Lima,pedro@y.com`
+
+// Relatório sem a coluna de ID configurada
 const CSV_REL_SEM_COLUNA = `Outro,Header
 A,B`
 
 // Relatório com coluna "Grupos" preenchida para um aluno, vazia para outro
-const CSV_REL_COM_GRUPOS = `Nome completo,Grupos,Email
-João Silva,Maranhão: Hermes - 42.441.933/0001-64,joao@x.com
-Pedro Lima,,pedro@x.com`
+const CSV_REL_COM_GRUPOS = `ID,Nome completo,Grupos,Email
+A1,João Silva,Maranhão: Hermes - 42.441.933/0001-64,joao@x.com
+P1,Pedro Lima,,pedro@x.com`
 
 describe('normalizarNome', () => {
   it('coloca em minúsculo e colapsa espaços múltiplos', () => {
@@ -97,104 +107,113 @@ describe('parsearGrupos', () => {
 })
 
 describe('carregarAlunos', () => {
-  it('carrega formato A (coluna residente) — nome normalizado correto', () => {
-    const alunos = carregarAlunos(CSV_ALUNOS_A)
+  it('carrega formato A (coluna residente) — identificador e nome corretos', () => {
+    const alunos = carregarAlunos(CSV_ALUNOS_A, 'ID')
     expect(alunos).toHaveLength(2)
+    expect(alunos[0].identificador).toBe('A1')
     expect(alunos[0].nomeNormalizado).toBe('joão silva')
     expect(alunos[0].empresa).toBe('Empresa X')
   })
 
   it('carrega formato B (Nome + Sobrenome + Grupos) — estado e empresa extraídos', () => {
-    const alunos = carregarAlunos(CSV_ALUNOS_B)
+    const alunos = carregarAlunos(CSV_ALUNOS_B, 'ID')
     expect(alunos).toHaveLength(2)
-    expect(alunos[0].nomeNormalizado).toBe('joão silva')
+    expect(alunos[0].identificador).toBe('B1')
     expect(alunos[0].estado).toBe('PE')
+    expect(alunos[0].empresa).toBe('Empresa X')
+  })
+
+  it('descarta linha com identificador vazio', () => {
+    const alunos = carregarAlunos(CSV_ALUNOS_ID_VAZIO, 'ID')
+    expect(alunos).toHaveLength(1)
+    expect(alunos[0].identificador).toBe('A2')
+  })
+
+  it('mantém a primeira ocorrência quando o identificador está duplicado', () => {
+    const alunos = carregarAlunos(CSV_ALUNOS_ID_DUPLICADO, 'ID')
+    expect(alunos).toHaveLength(1)
     expect(alunos[0].empresa).toBe('Empresa X')
   })
 })
 
 describe('carregarRelatorio', () => {
-  it('retorna Set de nomes normalizados da coluna "Nome completo"', () => {
-    const nomes = carregarRelatorio(CSV_REL_COM_COLUNA)
-    expect(nomes).not.toBeNull()
-    expect(nomes!.has('joão silva')).toBe(true)
-    expect(nomes!.has('pedro lima')).toBe(true)
-    expect(nomes!.size).toBe(2)
+  it('retorna Set de identificadores da coluna de ID configurada', () => {
+    const ids = carregarRelatorio(CSV_REL_COM_COLUNA, 'ID')
+    expect(ids).not.toBeNull()
+    expect(ids!.has('A1')).toBe(true)
+    expect(ids!.has('P1')).toBe(true)
+    expect(ids!.size).toBe(2)
   })
 
-  it('retorna null se coluna "Nome completo" ausente', () => {
-    expect(carregarRelatorio(CSV_REL_SEM_COLUNA)).toBeNull()
+  it('retorna null se a coluna de ID configurada estiver ausente', () => {
+    expect(carregarRelatorio(CSV_REL_SEM_COLUNA, 'ID')).toBeNull()
   })
 })
 
 describe('extrairGruposRelatorio', () => {
-  it('extrai estado (normalizado) e empresa por nome normalizado', () => {
-    const grupos = extrairGruposRelatorio(CSV_REL_COM_GRUPOS)
-    expect(grupos.get('joão silva')).toEqual(['MA', 'Hermes'])
+  it('extrai estado (normalizado) e empresa por identificador', () => {
+    const grupos = extrairGruposRelatorio(CSV_REL_COM_GRUPOS, 'ID')
+    expect(grupos.get('A1')).toEqual(['MA', 'Hermes'])
   })
 
   it('ignora aluno com célula de Grupos vazia', () => {
-    const grupos = extrairGruposRelatorio(CSV_REL_COM_GRUPOS)
-    expect(grupos.has('pedro lima')).toBe(false)
+    const grupos = extrairGruposRelatorio(CSV_REL_COM_GRUPOS, 'ID')
+    expect(grupos.has('P1')).toBe(false)
   })
 
   it('retorna Map vazio se não houver coluna Grupos', () => {
-    const grupos = extrairGruposRelatorio(CSV_REL_COM_COLUNA)
+    const grupos = extrairGruposRelatorio(CSV_REL_COM_COLUNA, 'ID')
     expect(grupos.size).toBe(0)
   })
 })
 
 describe('aplicarFallbackGrupos', () => {
   it('preenche estado vazio a partir do fallback', () => {
-    const alunos = carregarAlunos(CSV_ALUNOS_A) // Formato A: estado sempre vazio
-    const grupos = new Map<string, [string, string]>([['joão silva', ['MA', 'Hermes']]])
+    const alunos = carregarAlunos(CSV_ALUNOS_A, 'ID') // Formato A: estado sempre vazio
+    const grupos = new Map<string, [string, string]>([['A1', ['MA', 'Hermes']]])
     const resultado = aplicarFallbackGrupos(alunos, grupos)
 
-    const joao = resultado.find((a) => a.nomeNormalizado === 'joão silva')!
+    const joao = resultado.find((a) => a.identificador === 'A1')!
     expect(joao.estado).toBe('MA')
   })
 
   it('não sobrescreve estado já preenchido pela planilha geral', () => {
-    const alunos = carregarAlunos(CSV_ALUNOS_B) // já tem estado 'PE' para João
-    const grupos = new Map<string, [string, string]>([['joão silva', ['MA', 'Outra Empresa']]])
+    const alunos = carregarAlunos(CSV_ALUNOS_B, 'ID') // já tem estado 'PE' para B1
+    const grupos = new Map<string, [string, string]>([['B1', ['MA', 'Outra Empresa']]])
     const resultado = aplicarFallbackGrupos(alunos, grupos)
 
-    const joao = resultado.find((a) => a.nomeNormalizado === 'joão silva')!
+    const joao = resultado.find((a) => a.identificador === 'B1')!
     expect(joao.estado).toBe('PE')
   })
 
   it('ignora alunos sem correspondência no fallback', () => {
-    const alunos = carregarAlunos(CSV_ALUNOS_A)
+    const alunos = carregarAlunos(CSV_ALUNOS_A, 'ID')
     const resultado = aplicarFallbackGrupos(alunos, new Map())
     expect(resultado).toEqual(alunos)
   })
 
   it('preenche empresa vazia a partir do fallback', () => {
-    const alunos = carregarAlunos(CSV_ALUNOS_A) // Formato A: estado e o teste aqui força empresa vazia
+    const alunos = carregarAlunos(CSV_ALUNOS_A, 'ID')
     const alunoSemEmpresa = alunos.map((a) => ({ ...a, empresa: '' }))
-    const grupos = new Map<string, [string, string]>([['joão silva', ['MA', 'Hermes']]])
+    const grupos = new Map<string, [string, string]>([['A1', ['MA', 'Hermes']]])
     const resultado = aplicarFallbackGrupos(alunoSemEmpresa, grupos)
 
-    const joao = resultado.find((a) => a.nomeNormalizado === 'joão silva')!
+    const joao = resultado.find((a) => a.identificador === 'A1')!
     expect(joao.empresa).toBe('Hermes')
   })
 })
 
 describe('calcularAusencias', () => {
   it('detecta quem NÃO fez o relatório', () => {
-    const alunos = carregarAlunos(CSV_ALUNOS_A)
-    const rel = carregarRelatorio(CSV_REL_COM_COLUNA)! // só João e Pedro estão — Maria ausente
+    const alunos = carregarAlunos(CSV_ALUNOS_A, 'ID')
+    const rel = carregarRelatorio(CSV_REL_COM_COLUNA, 'ID')! // só A1 e P1 estão — A2 (Maria) ausente
     const resultado = calcularAusencias(alunos, { 'Relatório 1': rel })
 
-    const maria = resultado.find((r) =>
-      r.nomeCompleto.toLowerCase().includes('maria')
-    )!
+    const maria = resultado.find((r) => r.nomeCompleto.toLowerCase().includes('maria'))!
     expect(maria.totalAusencias).toBe(1)
     expect(maria.relatoriosAusentes).toContain('Relatório 1')
 
-    const joao = resultado.find((r) =>
-      r.nomeCompleto.toLowerCase().includes('joão')
-    )!
+    const joao = resultado.find((r) => r.nomeCompleto.toLowerCase().includes('joão'))!
     expect(joao.totalAusencias).toBe(0)
     expect(joao.relatoriosAusentes).toBe('')
   })
@@ -202,35 +221,44 @@ describe('calcularAusencias', () => {
 
 describe('calcularPresencas', () => {
   it('detecta quem FEZ o relatório', () => {
-    const alunos = carregarAlunos(CSV_ALUNOS_A)
-    const rel = carregarRelatorio(CSV_REL_COM_COLUNA)!
+    const alunos = carregarAlunos(CSV_ALUNOS_A, 'ID')
+    const rel = carregarRelatorio(CSV_REL_COM_COLUNA, 'ID')!
     const resultado = calcularPresencas(alunos, { 'Relatório 1': rel })
 
-    const joao = resultado.find((r) =>
-      r.nomeCompleto.toLowerCase().includes('joão')
-    )!
+    const joao = resultado.find((r) => r.nomeCompleto.toLowerCase().includes('joão'))!
     expect(joao.totalFeitos).toBe(1)
     expect(joao.relatoriosFeitos).toContain('Relatório 1')
 
-    const maria = resultado.find((r) =>
-      r.nomeCompleto.toLowerCase().includes('maria')
-    )!
+    const maria = resultado.find((r) => r.nomeCompleto.toLowerCase().includes('maria'))!
     expect(maria.totalFeitos).toBe(0)
+  })
+
+  it('casa relatório e planilha pelo identificador mesmo quando o nome muda', () => {
+    const planilhaComNomeNovo = `ID,residente,empresa
+A1,João Santos,Empresa X` // nome mudou de "Silva" para "Santos", identificador continua A1
+    const relatorio = `ID,Nome completo,Email
+A1,Qualquer Nome no Relatório,x@x.com`
+
+    const alunos = carregarAlunos(planilhaComNomeNovo, 'ID')
+    const rel = carregarRelatorio(relatorio, 'ID')!
+    const resultado = calcularPresencas(alunos, { 'Relatório 1': rel })
+
+    expect(resultado[0].totalFeitos).toBe(1)
   })
 })
 
 describe('integração: fallback de UF do relatório semanal', () => {
   it('aluno sem UF na planilha geral (Formato A) recebe UF/empresa extraídas do relatório', () => {
-    const alunos = carregarAlunos(CSV_ALUNOS_A)
-    const grupos = extrairGruposRelatorio(CSV_REL_COM_GRUPOS)
+    const alunos = carregarAlunos(CSV_ALUNOS_A, 'ID')
+    const grupos = extrairGruposRelatorio(CSV_REL_COM_GRUPOS, 'ID')
     const enriquecidos = aplicarFallbackGrupos(alunos, grupos)
 
-    const joao = enriquecidos.find((a) => a.nomeNormalizado === 'joão silva')!
+    const joao = enriquecidos.find((a) => a.identificador === 'A1')!
     expect(joao.estado).toBe('MA')
     // empresa já vinha preenchida pela planilha geral (Empresa X) — não é sobrescrita
     expect(joao.empresa).toBe('Empresa X')
 
-    const maria = enriquecidos.find((a) => a.nomeNormalizado === 'maria souza')!
+    const maria = enriquecidos.find((a) => a.identificador === 'A2')!
     // Maria não aparece em nenhum relatório com Grupos preenchido — segue vazia
     expect(maria.estado).toBe('')
   })
