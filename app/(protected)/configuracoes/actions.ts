@@ -27,8 +27,8 @@ export async function uploadPlanilhaGeral(
     const arquivo = formData.get('arquivo') as File
     if (!arquivo || arquivo.size === 0) return { error: 'Selecione um arquivo CSV.' }
 
-    const idColuna = (formData.get('idColuna') as string | null)?.trim()
-    if (!idColuna) return { error: 'Selecione a coluna de identificador.' }
+    const idColuna = formData.get('idColuna') as string | null
+    if (!idColuna || !idColuna.trim()) return { error: 'Selecione a coluna de identificador.' }
 
     const planilhaId = crypto.randomUUID()
     const storagePath = `${planilhaId}/arquivo.csv`

@@ -113,7 +113,6 @@ export function carregarAlunos(csvText: string, idColuna: string): Aluno[] {
 
   const headers = (meta.fields ?? []).map((h) => h.toLowerCase())
   const isFormatoA = headers.includes('residente')
-  const idKey = meta.fields?.find((f) => f === idColuna) ?? idColuna
 
   const vistos = new Set<string>()
   const alunos: Aluno[] = []
@@ -139,7 +138,7 @@ export function carregarAlunos(csvText: string, idColuna: string): Aluno[] {
     }
 
     const nomeNormalizado = normalizarNome(nomeCompleto)
-    const identificador = (row[idKey] ?? '').trim()
+    const identificador = (row[idColuna] ?? '').trim()
     if (!identificador || vistos.has(identificador)) continue
     vistos.add(identificador)
     alunos.push({ nomeCompleto, nomeNormalizado, identificador, estado, empresa })
