@@ -17,9 +17,13 @@ async function verificarAdmin() {
   return user
 }
 
-type ActionState = { error?: string; success?: boolean; relatorioId?: string } | null
+type ActionState = {
+  error?: string
+  sucesso?: { id: string; nome: string }[]
+  falhas?: { nome: string; erro: string }[]
+} | null
 
-export async function adicionarRelatorio(
+export async function adicionarRelatorios(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
@@ -27,12 +31,11 @@ export async function adicionarRelatorio(
     const user = await verificarAdmin()
     const supabase = await createClient()
 
-    const nome = formData.get('nome') as string
-    const semana = formData.get('semana') as string
-    const arquivo = formData.get('arquivo') as File
+    const arquivos = formData
+      .getAll('arquivos')
+      .filter((f): f is File => f instanceof File && f.size > 0)
 
-    if (!nome || !semana) return { error: 'Preencha nome e semana.' }
-    if (!arquivo || arquivo.size === 0) return { error: 'Selecione um arquivo CSV.' }
+    if (arquivos.length === 0) return { error: 'Selecione ao menos um arquivo CSV.' }
 
     const { data: planilhas } = await supabase
       .from('planilha_geral')
@@ -48,42 +51,76 @@ export async function adicionarRelatorio(
       }
     }
 
-    const texto = await arquivo.text()
-    if (!planilhaTemColuna(texto, idColuna)) {
-      return {
-        error: `Este relatório não possui a coluna de identificador "${idColuna}" configurada na planilha geral.`,
+    const { count } = await supabase
+      .from('relatorios')
+      .select('id', { count: 'exact', head: true })
+      .is('deleted_at', null)
+
+    let proximoNumero = (count ?? 0) + 1
+
+    const sucesso: { id: string; nome: string }[] = []
+    const falhas: { nome: string; erro: string }[] = []
+
+    for (const arquivo of arquivos) {
+      const nome = `Relatório ${proximoNumero}`
+      const semana = `Semana ${proximoNumero}`
+
+      try {
+        const texto = await arquivo.text()
+        if (!planilhaTemColuna(texto, idColuna)) {
+          falhas.push({
+            nome: arquivo.name,
+            erro: `Coluna de identificador "${idColuna}" ausente.`,
+          })
+          continue
+        }
+
+        const relatorioId = crypto.randomUUID()
+        const storagePath = `${relatorioId}/arquivo.csv`
+
+        const { error: uploadError } = await supabase.storage
+          .from('relatorios')
+          .upload(storagePath, arquivo, { upsert: true })
+
+        if (uploadError) {
+          falhas.push({ nome: arquivo.name, erro: `Erro no upload: ${uploadError.message}` })
+          continue
+        }
+
+        const { error: insertError } = await supabase.from('relatorios').insert({
+          id: relatorioId,
+          nome,
+          semana,
+          storage_path: storagePath,
+          user_id: user.id,
+        })
+
+        if (insertError) {
+          falhas.push({ nome: arquivo.name, erro: `Erro ao registrar: ${insertError.message}` })
+          continue
+        }
+
+        await registrarLog({
+          userId: user.id,
+          userEmail: user.email!,
+          action: 'relatorio.adicionar',
+          target: relatorioId,
+          details: { nome, semana },
+        })
+
+        sucesso.push({ id: relatorioId, nome })
+        proximoNumero++
+      } catch (e) {
+        falhas.push({
+          nome: arquivo.name,
+          erro: e instanceof Error ? e.message : 'Erro desconhecido',
+        })
       }
     }
 
-    const relatorioId = crypto.randomUUID()
-    const storagePath = `${relatorioId}/arquivo.csv`
+    if (sucesso.length > 0) revalidatePath('/relatorios')
 
-    const { error: uploadError } = await supabase.storage
-      .from('relatorios')
-      .upload(storagePath, arquivo, { upsert: true })
-
-    if (uploadError) return { error: `Erro no upload: ${uploadError.message}` }
-
-    const { error: insertError } = await supabase.from('relatorios').insert({
-      id: relatorioId,
-      nome,
-      semana,
-      storage_path: storagePath,
-      user_id: user.id,
-    })
-
-    if (insertError) return { error: `Erro ao registrar: ${insertError.message}` }
-
-    await registrarLog({
-      userId: user.id,
-      userEmail: user.email!,
-      action: 'relatorio.adicionar',
-      target: relatorioId,
-      details: { nome, semana },
-    })
-
-    revalidatePath('/relatorios')
-    return { success: true, relatorioId }
+    return { sucesso, falhas }
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Erro desconhecido' }
   }
