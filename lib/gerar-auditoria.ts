@@ -7,6 +7,7 @@ import {
   aplicarFallbackGrupos,
   calcularAusencias,
   calcularPresencas,
+  planilhaTemColuna,
   type ResultadoAusencia,
   type ResultadoPresenca,
 } from './pente-fino'
@@ -102,11 +103,7 @@ export async function gerarAuditoria(
   }
 
   // 4. Processar
-  const { meta: metaPlanilha } = Papa.parse<Record<string, string>>(planilhaText, {
-    header: true,
-    preview: 1,
-  })
-  if (!metaPlanilha.fields?.includes(idColuna)) {
+  if (!planilhaTemColuna(planilhaText, idColuna)) {
     throw new Error(
       `A planilha geral atual não tem a coluna de identificador "${idColuna}". Reenvie a planilha geral em /configuracoes com essa coluna, ou escolha outra coluna.`
     )

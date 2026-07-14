@@ -9,6 +9,7 @@ import {
   aplicarFallbackGrupos,
   calcularAusencias,
   calcularPresencas,
+  planilhaTemColuna,
 } from './pente-fino'
 
 // Formato A: coluna "residente" (estado fica vazio, empresa da coluna "empresa") + coluna de ID
@@ -133,6 +134,16 @@ describe('carregarAlunos', () => {
     const alunos = carregarAlunos(CSV_ALUNOS_ID_DUPLICADO, 'ID')
     expect(alunos).toHaveLength(1)
     expect(alunos[0].empresa).toBe('Empresa X')
+  })
+})
+
+describe('planilhaTemColuna', () => {
+  it('retorna true quando a coluna existe no cabeçalho', () => {
+    expect(planilhaTemColuna(CSV_ALUNOS_A, 'ID')).toBe(true)
+  })
+
+  it('retorna false quando a coluna não existe no cabeçalho', () => {
+    expect(planilhaTemColuna(CSV_ALUNOS_A, 'Outra')).toBe(false)
   })
 })
 

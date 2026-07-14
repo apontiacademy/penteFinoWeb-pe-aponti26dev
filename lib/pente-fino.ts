@@ -148,6 +148,14 @@ export function carregarAlunos(csvText: string, idColuna: string): Aluno[] {
   return alunos
 }
 
+export function planilhaTemColuna(csvText: string, idColuna: string): boolean {
+  const { meta } = Papa.parse<Record<string, string>>(csvText, {
+    header: true,
+    preview: 1,
+  })
+  return meta.fields?.includes(idColuna) ?? false
+}
+
 // Retorna null se a coluna de identificador configurada estiver ausente (arquivo inválido)
 export function carregarRelatorio(csvText: string, idColuna: string): Set<string> | null {
   const { data, meta } = Papa.parse<Record<string, string>>(csvText, {
