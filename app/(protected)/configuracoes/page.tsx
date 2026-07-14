@@ -23,7 +23,7 @@ export default async function ConfiguracoesPage() {
 
   const { data: planilhas } = await supabase
     .from('planilha_geral')
-    .select('id, uploaded_at')
+    .select('id, uploaded_at, id_coluna')
     .order('uploaded_at', { ascending: false })
     .limit(5)
 
@@ -49,7 +49,8 @@ export default async function ConfiguracoesPage() {
             <code className="text-xs bg-muted px-1.5 py-0.5 rounded">residente, empresa</code>{' '}
             (Formato A) ou{' '}
             <code className="text-xs bg-muted px-1.5 py-0.5 rounded">Nome, Sobrenome, Grupos</code>{' '}
-            (Formato B). Será usada em todas as próximas auditorias.
+            (Formato B), mais uma coluna à sua escolha para servir de identificador único do aluno.
+            Será usada em todas as próximas auditorias.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -69,6 +70,11 @@ export default async function ConfiguracoesPage() {
                         timeZone: 'America/Sao_Paulo',
                       })}
                     </span>
+                    {p.id_coluna && (
+                      <Badge variant="outline" className="text-xs h-5 px-2">
+                        ID: {p.id_coluna}
+                      </Badge>
+                    )}
                     {i === 0 && (
                       <Badge className="text-xs h-5 px-2 bg-primary/10 text-primary border-primary/20 border">
                         atual
