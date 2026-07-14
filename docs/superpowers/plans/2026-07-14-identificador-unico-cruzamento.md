@@ -746,11 +746,7 @@ Replace with:
   }
 
   // 4. Processar
-  const { meta: metaPlanilha } = Papa.parse<Record<string, string>>(planilhaText, {
-    header: true,
-    preview: 1,
-  })
-  if (!metaPlanilha.fields?.includes(idColuna)) {
+  if (!planilhaTemColuna(planilhaText, idColuna)) {
     throw new Error(
       `A planilha geral atual não tem a coluna de identificador "${idColuna}". Reenvie a planilha geral em /configuracoes com essa coluna, ou escolha outra coluna.`
     )
@@ -759,7 +755,70 @@ Replace with:
   const alunos = carregarAlunos(planilhaText, idColuna)
 ```
 
-**Por que este passo existe (não estava no design original):** a revisão de qualidade da Task 2 encontrou uma lacuna — `carregarAlunos` não tem como sinalizar "coluna de ID ausente no cabeçalho" (ao contrário de `carregarRelatorio`, que retorna `null` nesse caso); se a coluna configurada não bater com nenhum cabeçalho da planilha geral, `carregarAlunos` simplesmente descarta todas as linhas (identificador vira `''` em todas) e retorna `[]` silenciosamente. Sem este check, uma planilha geral com a coluna renomeada/ausente geraria uma auditoria "vazia" sem nenhum erro claro — exatamente o tipo de falha silenciosa que a issue #58 pede para eliminar. `Papa` já está importado neste arquivo (usado por `Papa.unparse` mais abaixo), então não é necessário um novo import.
+**Por que este passo existe (não estava no design original):** a revisão de qualidade da Task 2 encontrou uma lacuna — `carregarAlunos` não tem como sinalizar "coluna de ID ausente no cabeçalho" (ao contrário de `carregarRelatorio`, que retorna `null` nesse caso); se a coluna configurada não bater com nenhum cabeçalho da planilha geral, `carregarAlunos` simplesmente descarta todas as linhas (identificador vira `''` em todas) e retorna `[]` silenciosamente. Sem este check, uma planilha geral com a coluna renomeada/ausente geraria uma auditoria "vazia" sem nenhum erro claro — exatamente o tipo de falha silenciosa que a issue #58 pede para eliminar.
+
+`planilhaTemColuna` é uma nova função pura em `lib/pente-fino.ts` (em vez de um `Papa.parse` inline em `gerar-auditoria.ts`): a revisão de qualidade da Task 3 apontou que a checagem equivalente do lado do relatório (`carregarRelatorio` retornando `null`) já é testada em `lib/pente-fino.test.ts`, enquanto uma checagem inline aqui ficaria sem cobertura de teste (este arquivo não tem suíte, por depender de um `SupabaseClient` real). Extrair para `pente-fino.ts` fecha essa lacuna de cobertura.
+
+Adicionar em `lib/pente-fino.ts`, logo após `carregarAlunos`:
+
+```ts
+export function planilhaTemColuna(csvText: string, idColuna: string): boolean {
+  const { meta } = Papa.parse<Record<string, string>>(csvText, {
+    header: true,
+    preview: 1,
+  })
+  return meta.fields?.includes(idColuna) ?? false
+}
+```
+
+Adicionar em `lib/pente-fino.test.ts`, após o `describe('carregarAlunos', ...)`:
+
+```ts
+describe('planilhaTemColuna', () => {
+  it('retorna true quando a coluna existe no cabeçalho', () => {
+    expect(planilhaTemColuna(CSV_ALUNOS_A, 'ID')).toBe(true)
+  })
+
+  it('retorna false quando a coluna não existe no cabeçalho', () => {
+    expect(planilhaTemColuna(CSV_ALUNOS_A, 'Outra')).toBe(false)
+  })
+})
+```
+
+E adicionar `planilhaTemColuna` ao bloco de import do topo de `lib/pente-fino.test.ts` (junto de `carregarAlunos`, etc).
+
+Em `lib/gerar-auditoria.ts`, adicionar `planilhaTemColuna` ao import existente de `./pente-fino`:
+
+Find:
+
+```ts
+import {
+  carregarAlunos,
+  carregarRelatorio,
+  extrairGruposRelatorio,
+  aplicarFallbackGrupos,
+  calcularAusencias,
+  calcularPresencas,
+  type ResultadoAusencia,
+  type ResultadoPresenca,
+} from './pente-fino'
+```
+
+Replace with:
+
+```ts
+import {
+  carregarAlunos,
+  carregarRelatorio,
+  extrairGruposRelatorio,
+  aplicarFallbackGrupos,
+  calcularAusencias,
+  calcularPresencas,
+  planilhaTemColuna,
+  type ResultadoAusencia,
+  type ResultadoPresenca,
+} from './pente-fino'
+```
 
 - [ ] **Step 3: Type-check**
 
