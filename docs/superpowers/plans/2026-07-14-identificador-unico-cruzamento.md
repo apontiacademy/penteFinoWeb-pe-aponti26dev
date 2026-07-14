@@ -1213,10 +1213,10 @@ Replace with:
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import Papa from 'papaparse'
 import { createClient } from '@/lib/supabase/server'
 import { gerarAuditoria } from '@/lib/gerar-auditoria'
 import { registrarLog } from '@/lib/system-log'
+import { planilhaTemColuna } from '@/lib/pente-fino'
 ```
 
 Find:
@@ -1249,8 +1249,7 @@ Replace with:
     }
 
     const texto = await arquivo.text()
-    const { meta } = Papa.parse<Record<string, string>>(texto, { header: true, preview: 1 })
-    if (!meta.fields?.includes(idColuna)) {
+    if (!planilhaTemColuna(texto, idColuna)) {
       return {
         error: `Este relatório não possui a coluna de identificador "${idColuna}" configurada na planilha geral.`,
       }
@@ -1258,6 +1257,8 @@ Replace with:
 
     const relatorioId = crypto.randomUUID()
 ```
+
+**Nota:** esta task reaproveita `planilhaTemColuna` (criada na Task 3, em `lib/pente-fino.ts`, já testada em `lib/pente-fino.test.ts`) em vez de repetir um `Papa.parse` inline sem cobertura — é exatamente a mesma checagem ("essa coluna existe no cabeçalho deste CSV?"), só que aplicada ao arquivo do relatório em vez da planilha geral. Nenhum import de `papaparse` é necessário neste arquivo.
 
 - [ ] **Step 2: Type-check**
 
