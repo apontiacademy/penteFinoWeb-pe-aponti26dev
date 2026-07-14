@@ -19,6 +19,7 @@ import { uploadPlanilhaGeral } from '@/app/(protected)/configuracoes/actions'
 export function PlanilhaGeralForm() {
   const [state, action, pending] = useActionState(uploadPlanilhaGeral, null)
   const formRef = useRef<HTMLFormElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [colunas, setColunas] = useState<string[]>([])
   const [idColuna, setIdColuna] = useState<string | null>(null)
@@ -79,6 +80,13 @@ export function PlanilhaGeralForm() {
     }
   }
 
+  function handleCancel() {
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    setFileName(null)
+    setColunas([])
+    setIdColuna(null)
+  }
+
   return (
     <form ref={formRef} action={action} onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
@@ -116,6 +124,7 @@ export function PlanilhaGeralForm() {
           )}
         </label>
         <Input
+          ref={fileInputRef}
           id="arquivo-pg"
           name="arquivo"
           type="file"
@@ -147,19 +156,26 @@ export function PlanilhaGeralForm() {
         </div>
       )}
 
-      <Button type="submit" disabled={pending} className="gap-2">
-        {pending ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Enviando...
-          </>
-        ) : (
-          <>
-            <UploadCloud className="w-4 h-4" />
-            Atualizar planilha geral
-          </>
+      <div className="flex items-center gap-2">
+        <Button type="submit" disabled={pending} className="gap-2">
+          {pending ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Enviando...
+            </>
+          ) : (
+            <>
+              <UploadCloud className="w-4 h-4" />
+              Atualizar planilha geral
+            </>
+          )}
+        </Button>
+        {fileName && (
+          <Button type="button" variant="outline" disabled={pending} onClick={handleCancel}>
+            Cancelar
+          </Button>
         )}
-      </Button>
+      </div>
     </form>
   )
 }
