@@ -6,6 +6,8 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 e este projeto segue [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
+
+## [1.1.0] - 2026-07-14
 ### Added
 - Recuperação de senha ("esqueci minha senha") via link de redefinição por email.
 - Tela de perfil com alteração de senha e edição de dados do usuário logado.
