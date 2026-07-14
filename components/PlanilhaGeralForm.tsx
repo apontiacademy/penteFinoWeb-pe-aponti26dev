@@ -47,19 +47,24 @@ export function PlanilhaGeralForm() {
 
     setFileName(file.name)
 
-    const texto = await file.text()
-    const { meta } = Papa.parse<Record<string, string>>(texto, {
-      header: true,
-      preview: 1,
-    })
+    try {
+      const texto = await file.text()
+      const { meta } = Papa.parse<Record<string, string>>(texto, {
+        header: true,
+        preview: 1,
+      })
 
-    if (!meta.fields || meta.fields.length === 0) {
+      if (!meta.fields || meta.fields.length === 0) {
+        setColunas([])
+        toast.error('Não foi possível ler as colunas desse arquivo CSV.')
+        return
+      }
+
+      setColunas(meta.fields)
+    } catch {
       setColunas([])
       toast.error('Não foi possível ler as colunas desse arquivo CSV.')
-      return
     }
-
-    setColunas(meta.fields)
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
