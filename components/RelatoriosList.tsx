@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -27,10 +27,20 @@ type Relatorio = {
 }
 
 export function RelatoriosList({ relatorios }: { relatorios: Relatorio[] }) {
-  const [selecionados, setSelecionados] = useState<Set<string>>(new Set())
+  const [selecionadosBruto, setSelecionados] = useState<Set<string>>(new Set())
   const [excluindo, setExcluindo] = useState(false)
   const [idsExcluidos, setIdsExcluidos] = useState<string[] | null>(null)
   const [gerando, setGerando] = useState(false)
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false)
+  const [openRowId, setOpenRowId] = useState<string | null>(null)
+
+  // Reconcilia contra `relatorios` durante o render (sem efeito) para que IDs
+  // que deixaram de existir na prop (ex.: excluídos em outra sessão) nunca
+  // fiquem "presos" em `selecionados`.
+  const selecionados = useMemo(
+    () => new Set([...selecionadosBruto].filter((id) => relatorios.some((r) => r.id === id))),
+    [selecionadosBruto, relatorios]
+  )
 
   const todosSelecionados = relatorios.length > 0 && selecionados.size === relatorios.length
   const algunsSelecionados = selecionados.size > 0 && !todosSelecionados
@@ -69,8 +79,12 @@ export function RelatoriosList({ relatorios }: { relatorios: Relatorio[] }) {
         })
         setIdsExcluidos(sucesso)
       }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao excluir relatório(s)')
     } finally {
       setExcluindo(false)
+      setBulkDialogOpen(false)
+      setOpenRowId(null)
     }
   }
 
@@ -121,7 +135,7 @@ export function RelatoriosList({ relatorios }: { relatorios: Relatorio[] }) {
         </div>
 
         {selecionados.size > 0 && (
-          <AlertDialog>
+          <AlertDialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
             <AlertDialogTrigger render={
               <Button
                 variant="ghost"
@@ -189,7 +203,10 @@ export function RelatoriosList({ relatorios }: { relatorios: Relatorio[] }) {
               </div>
             </div>
 
-            <AlertDialog>
+            <AlertDialog
+              open={openRowId === r.id}
+              onOpenChange={(open) => setOpenRowId(open ? r.id : null)}
+            >
               <AlertDialogTrigger render={
                 <Button
                   variant="ghost"
