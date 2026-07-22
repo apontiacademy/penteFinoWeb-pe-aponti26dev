@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { login } from './actions'
@@ -13,6 +13,7 @@ import { Loader2, ShieldCheck, BarChart3, FileText } from 'lucide-react'
 
 export default function LoginPage() {
   const [state, action, pending] = useActionState(login, null)
+  const [email, setEmail] = useState('')
 
   useEffect(() => {
     if (state?.error) toast.error(state.error)
@@ -98,6 +99,8 @@ export default function LoginPage() {
                 placeholder="seu@email.com"
                 autoComplete="email"
                 disabled={pending}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="h-11"
               />
             </div>

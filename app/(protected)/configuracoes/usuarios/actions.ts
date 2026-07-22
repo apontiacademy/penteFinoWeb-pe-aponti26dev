@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { registrarLog } from '@/lib/system-log'
+import { gerarSenhaAleatoria } from '@/lib/gerar-senha'
+import { enviarSenhaPorEmail } from '@/lib/email/enviar-senha-usuario'
 
 async function verificarAdmin() {
   const supabase = await createClient()
@@ -14,22 +16,27 @@ async function verificarAdmin() {
 }
 
 export async function criarUsuario(
-  prevState: { error?: string; success?: boolean } | null,
+  prevState: {
+    error?: string
+    success?: boolean
+    emailFalhou?: boolean
+    senhaGerada?: string
+  } | null,
   formData: FormData
 ) {
   try {
     const admin = await verificarAdmin()
 
     const email = formData.get('email') as string
-    const senha = formData.get('senha') as string
     const role = formData.get('role') as string
     const nome = (formData.get('nome') as string) ?? ''
     const telefone = (formData.get('telefone') as string) ?? ''
     const cargo = (formData.get('cargo') as string) ?? ''
     const funcao = (formData.get('funcao') as string) ?? ''
 
-    if (!email || !senha || !role) return { error: 'Email, senha e perfil são obrigatórios' }
-    if (senha.length < 6) return { error: 'Senha deve ter pelo menos 6 caracteres' }
+    if (!email || !role) return { error: 'Email e perfil são obrigatórios' }
+
+    const senha = gerarSenhaAleatoria()
 
     const supabase = createServiceClient()
     const { error } = await supabase.auth.admin.createUser({
@@ -50,6 +57,12 @@ export async function criarUsuario(
     })
 
     revalidatePath('/configuracoes/usuarios')
+
+    const { error: emailError } = await enviarSenhaPorEmail({ email, nome, senha })
+    if (emailError) {
+      return { success: true, emailFalhou: true, senhaGerada: senha }
+    }
+
     return { success: true }
   } catch (e: unknown) {
     return { error: e instanceof Error ? e.message : 'Erro desconhecido' }
