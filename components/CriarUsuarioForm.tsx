@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useRef, useEffect } from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { AlertCircle, CheckCircle2, Loader2, UserPlus } from 'lucide-react'
+import { AlertCircle, Loader2, UserPlus } from 'lucide-react'
 import { criarUsuario } from '@/app/(protected)/configuracoes/usuarios/actions'
 
 export function CriarUsuarioForm({ onSuccess }: { onSuccess?: () => void }) {
@@ -22,11 +23,13 @@ export function CriarUsuarioForm({ onSuccess }: { onSuccess?: () => void }) {
   useEffect(() => {
     if (state?.success && !state?.emailFalhou) {
       formRef.current?.reset()
-      const timer = setTimeout(() => onSuccess?.(), 1500)
-      return () => clearTimeout(timer)
+      toast.success('Usuário criado com sucesso!')
+      onSuccess?.()
+    } else if (state?.error) {
+      toast.error(state.error)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state?.success, state?.emailFalhou])
+  }, [state])
 
   return (
     <form ref={formRef} action={action} className="space-y-5">
@@ -116,12 +119,6 @@ export function CriarUsuarioForm({ onSuccess }: { onSuccess?: () => void }) {
         </div>
       </div>
 
-      {state?.error && (
-        <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/8 border border-destructive/20 px-3 py-2.5 rounded-lg">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          {state.error}
-        </div>
-      )}
       {state?.success && state?.emailFalhou && (
         <div className="flex flex-col gap-1.5 text-amber-700 text-sm bg-amber-50 border border-amber-200 px-3 py-2.5 rounded-lg">
           <div className="flex items-center gap-2">
@@ -132,12 +129,6 @@ export function CriarUsuarioForm({ onSuccess }: { onSuccess?: () => void }) {
             Repasse esta senha manualmente ao usuário:{' '}
             <code className="bg-amber-100 px-1.5 py-0.5 rounded">{state.senhaGerada}</code>
           </p>
-        </div>
-      )}
-      {state?.success && !state?.emailFalhou && (
-        <div className="flex items-center gap-2 text-green-700 text-sm bg-green-50 border border-green-200 px-3 py-2.5 rounded-lg">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
-          Usuário criado com sucesso! A senha foi enviada por email.
         </div>
       )}
 

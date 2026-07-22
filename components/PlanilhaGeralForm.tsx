@@ -1,26 +1,94 @@
 'use client'
 
 import { useActionState, useRef, useState, useEffect } from 'react'
+import Papa from 'papaparse'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { UploadCloud, FileCheck2, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { UploadCloud, FileCheck2, Loader2 } from 'lucide-react'
 import { uploadPlanilhaGeral } from '@/app/(protected)/configuracoes/actions'
 
 export function PlanilhaGeralForm() {
   const [state, action, pending] = useActionState(uploadPlanilhaGeral, null)
   const formRef = useRef<HTMLFormElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [fileName, setFileName] = useState<string | null>(null)
+  const [colunas, setColunas] = useState<string[]>([])
+  const [idColuna, setIdColuna] = useState<string | null>(null)
 
   useEffect(() => {
     if (state?.success) {
       formRef.current?.reset()
       setFileName(null)
+      setColunas([])
+      setIdColuna(null)
+      toast.success('Planilha atualizada com sucesso!')
+    } else if (state?.error) {
+      toast.error(state.error)
     }
-  }, [state?.success])
+  }, [state])
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null
+    setIdColuna(null)
+
+    if (!file) {
+      setFileName(null)
+      setColunas([])
+      return
+    }
+
+    setFileName(file.name)
+
+    try {
+      const texto = await file.text()
+      const { meta } = Papa.parse<Record<string, string>>(texto, {
+        header: true,
+        preview: 1,
+      })
+
+      if (!meta.fields || meta.fields.length === 0) {
+        setColunas([])
+        toast.error('Não foi possível ler as colunas desse arquivo CSV.')
+        return
+      }
+
+      setColunas(meta.fields)
+    } catch {
+      setColunas([])
+      toast.error('Não foi possível ler as colunas desse arquivo CSV.')
+    }
+  }
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    if (!fileName) {
+      e.preventDefault()
+      toast.error('Selecione um arquivo CSV.')
+      return
+    }
+    if (!idColuna) {
+      e.preventDefault()
+      toast.error('Selecione a coluna de identificador.')
+    }
+  }
+
+  function handleCancel() {
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    setFileName(null)
+    setColunas([])
+    setIdColuna(null)
+  }
 
   return (
-    <form ref={formRef} action={action} className="space-y-4">
+    <form ref={formRef} action={action} onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label>Arquivo CSV</Label>
         <label
@@ -56,43 +124,58 @@ export function PlanilhaGeralForm() {
           )}
         </label>
         <Input
+          ref={fileInputRef}
           id="arquivo-pg"
           name="arquivo"
           type="file"
           accept=".csv"
-          required
           disabled={pending}
           className="sr-only"
-          onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
+          onChange={handleFileChange}
         />
       </div>
 
-      {state?.error && (
-        <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/8 border border-destructive/20 px-3 py-2.5 rounded-lg">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          {state.error}
-        </div>
-      )}
-      {state?.success && (
-        <div className="flex items-center gap-2 text-green-700 text-sm bg-green-50 border border-green-200 px-3 py-2.5 rounded-lg">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
-          Planilha atualizada com sucesso!
+      {colunas.length > 0 && (
+        <div className="space-y-2">
+          <Label>Coluna de identificador único</Label>
+          <Select name="idColuna" value={idColuna} onValueChange={setIdColuna} disabled={pending}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Selecione a coluna de identificador" />
+            </SelectTrigger>
+            <SelectContent>
+              {colunas.map((coluna) => (
+                <SelectItem key={coluna} value={coluna}>
+                  {coluna}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Essa coluna será usada para cruzar os alunos com os relatórios semanais, no lugar do nome.
+          </p>
         </div>
       )}
 
-      <Button type="submit" disabled={pending} className="gap-2">
-        {pending ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Enviando...
-          </>
-        ) : (
-          <>
-            <UploadCloud className="w-4 h-4" />
-            Atualizar planilha geral
-          </>
+      <div className="flex items-center gap-2">
+        <Button type="submit" disabled={pending} className="gap-2">
+          {pending ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Enviando...
+            </>
+          ) : (
+            <>
+              <UploadCloud className="w-4 h-4" />
+              Atualizar planilha geral
+            </>
+          )}
+        </Button>
+        {fileName && (
+          <Button type="button" variant="outline" disabled={pending} onClick={handleCancel}>
+            Cancelar
+          </Button>
         )}
-      </Button>
+      </div>
     </form>
   )
 }

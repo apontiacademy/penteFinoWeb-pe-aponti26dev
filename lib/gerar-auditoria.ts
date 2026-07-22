@@ -7,6 +7,7 @@ import {
   aplicarFallbackGrupos,
   calcularAusencias,
   calcularPresencas,
+  planilhaTemColuna,
   type ResultadoAusencia,
   type ResultadoPresenca,
 } from './pente-fino'
@@ -20,12 +21,19 @@ export async function gerarAuditoria(
   // 1. Planilha geral mais recente
   const { data: planilhas, error: errPlanilha } = await supabase
     .from('planilha_geral')
-    .select('storage_path')
+    .select('storage_path, id_coluna')
     .order('uploaded_at', { ascending: false })
     .limit(1)
 
   if (errPlanilha || !planilhas?.length) {
     throw new Error('Nenhuma planilha geral encontrada. Faça upload em /configuracoes primeiro.')
+  }
+
+  const idColuna = planilhas[0].id_coluna
+  if (!idColuna) {
+    throw new Error(
+      'A planilha geral atual não tem uma coluna de identificador configurada. Reenvie a planilha geral em /configuracoes escolhendo a coluna de ID.'
+    )
   }
 
   const { data: planilhaFile } = await supabase.storage
@@ -53,10 +61,9 @@ export async function gerarAuditoria(
     return
   }
 
-  // 3. Baixar e parsear cada CSV de relatório
-  const relatoriosMap: Record<string, Set<string>> = {}
-  const relatoriosIds: string[] = []
-  const gruposPorRelatorio: Map<string, [string, string]>[] = []
+  // 3. Baixar cada CSV de relatório e validar a coluna de identificador antes de processar
+  const relatoriosValidos: { rel: { id: string; nome: string }; ids: Set<string>; texto: string }[] = []
+  const semColuna: string[] = []
 
   for (const rel of relatorios) {
     const { data: relFile } = await supabase.storage
@@ -68,21 +75,41 @@ export async function gerarAuditoria(
       continue
     }
 
-    const text = await relFile.text()
-    const nomes = carregarRelatorio(text)
+    const texto = await relFile.text()
+    const ids = carregarRelatorio(texto, idColuna)
 
-    if (nomes === null) {
-      console.warn(`Relatório ${rel.nome}: coluna "Nome completo" ausente — ignorado`)
+    if (ids === null) {
+      semColuna.push(rel.nome)
       continue
     }
 
-    relatoriosMap[rel.nome] = nomes
+    relatoriosValidos.push({ rel, ids, texto })
+  }
+
+  if (semColuna.length > 0) {
+    throw new Error(
+      `Os relatórios a seguir não têm a coluna de identificador "${idColuna}": ${semColuna.join(', ')}. Corrija os arquivos antes de gerar a auditoria.`
+    )
+  }
+
+  const relatoriosMap: Record<string, Set<string>> = {}
+  const relatoriosIds: string[] = []
+  const gruposPorRelatorio: Map<string, [string, string]>[] = []
+
+  for (const { rel, ids, texto } of relatoriosValidos) {
+    relatoriosMap[rel.nome] = ids
     relatoriosIds.push(rel.id)
-    gruposPorRelatorio.push(extrairGruposRelatorio(text))
+    gruposPorRelatorio.push(extrairGruposRelatorio(texto, idColuna))
   }
 
   // 4. Processar
-  const alunos = carregarAlunos(planilhaText)
+  if (!planilhaTemColuna(planilhaText, idColuna)) {
+    throw new Error(
+      `A planilha geral atual não tem a coluna de identificador "${idColuna}". Reenvie a planilha geral em /configuracoes com essa coluna, ou escolha outra coluna.`
+    )
+  }
+
+  const alunos = carregarAlunos(planilhaText, idColuna)
   let alunosEnriquecidos = alunos
   for (const grupos of gruposPorRelatorio) {
     alunosEnriquecidos = aplicarFallbackGrupos(alunosEnriquecidos, grupos)
