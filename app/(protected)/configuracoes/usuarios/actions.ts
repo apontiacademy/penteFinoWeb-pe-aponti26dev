@@ -92,17 +92,40 @@ export async function atualizarUsuario(
   revalidatePath('/configuracoes/usuarios')
 }
 
-export async function deletarUsuario(userId: string) {
+export async function desativarUsuario(userId: string) {
   const admin = await verificarAdmin()
-  if (admin.id === userId) throw new Error('Não é possível deletar seu próprio usuário')
+  if (admin.id === userId) throw new Error('Não é possível desativar seu próprio usuário')
+
   const supabase = createServiceClient()
-  const { error } = await supabase.auth.admin.deleteUser(userId)
+  const { error } = await supabase.auth.admin.updateUserById(userId, {
+    ban_duration: '876000h',
+  })
+  if (error) throw new Error(error.message)
+
+  await supabase.rpc('revoke_user_sessions', { target_user_id: userId })
+
+  await registrarLog({
+    userId: admin.id,
+    userEmail: admin.email!,
+    action: 'usuario.desativar',
+    target: userId,
+  })
+
+  revalidatePath('/configuracoes/usuarios')
+}
+
+export async function reativarUsuario(userId: string) {
+  const admin = await verificarAdmin()
+  const supabase = createServiceClient()
+  const { error } = await supabase.auth.admin.updateUserById(userId, {
+    ban_duration: 'none',
+  })
   if (error) throw new Error(error.message)
 
   await registrarLog({
     userId: admin.id,
     userEmail: admin.email!,
-    action: 'usuario.deletar',
+    action: 'usuario.reativar',
     target: userId,
   })
 
