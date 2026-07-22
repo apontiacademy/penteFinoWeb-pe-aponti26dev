@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import Link from 'next/link'
 import { login } from './actions'
 import { Logomark } from '@/components/Logomark'
@@ -12,6 +12,7 @@ import { AlertCircle, Loader2, ShieldCheck, BarChart3, FileText } from 'lucide-r
 
 export default function LoginPage() {
   const [state, action, pending] = useActionState(login, null)
+  const [email, setEmail] = useState('')
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
@@ -93,6 +94,8 @@ export default function LoginPage() {
                 placeholder="seu@email.com"
                 autoComplete="email"
                 disabled={pending}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="h-11"
               />
             </div>
