@@ -33,12 +33,15 @@ export async function enviarSenhaPorEmail(params: {
           <code style="background:#f4f4f5;padding:2px 6px;border-radius:4px;">${params.senha}</code>
         </p>
         <p>
-          <a href="${loginUrl}" style="display:inline-block;background:#000;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">
+          <a href="${loginUrl}" style="display:inline-block;background:#5701b8;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">
             Acessar o sistema
           </a>
         </p>
         <p style="color:#71717a;font-size:12px;">
           Não compartilhe esta senha com ninguém. Se você não esperava este email, ignore-o.
+        </p>
+        <p style="color:#71717a;font-size:12px;">
+          Este é um email automático — por favor, não responda.
         </p>
       </div>
     `
