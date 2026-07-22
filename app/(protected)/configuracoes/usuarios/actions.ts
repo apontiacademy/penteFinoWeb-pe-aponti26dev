@@ -102,7 +102,8 @@ export async function desativarUsuario(userId: string) {
   })
   if (error) throw new Error(error.message)
 
-  await supabase.rpc('revoke_user_sessions', { target_user_id: userId })
+  const { error: rpcError } = await supabase.rpc('revoke_user_sessions', { target_user_id: userId })
+  if (rpcError) console.error('revoke_user_sessions falhou', rpcError)
 
   await registrarLog({
     userId: admin.id,
