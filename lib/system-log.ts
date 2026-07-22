@@ -4,6 +4,8 @@ export type SystemLogAction =
   | 'usuario.criar'
   | 'usuario.atualizar'
   | 'usuario.deletar'
+  | 'usuario.desativar'
+  | 'usuario.reativar'
   | 'relatorio.adicionar'
   | 'relatorio.deletar'
   | 'auditoria.gerar'
@@ -15,6 +17,8 @@ export const ACTION_LABELS: Record<SystemLogAction, string> = {
   'usuario.criar': 'Criou usuário',
   'usuario.atualizar': 'Atualizou usuário',
   'usuario.deletar': 'Removeu usuário',
+  'usuario.desativar': 'Desativou usuário',
+  'usuario.reativar': 'Reativou usuário',
   'relatorio.adicionar': 'Adicionou relatório',
   'relatorio.deletar': 'Removeu relatório',
   'auditoria.gerar': 'Gerou auditoria',
