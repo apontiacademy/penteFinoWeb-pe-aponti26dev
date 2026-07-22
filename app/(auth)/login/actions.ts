@@ -17,7 +17,12 @@ export async function login(
     password: senha,
   })
 
-  if (error || !data.user) return { error: 'Email ou senha inválidos' }
+  if (error || !data.user) {
+    if (error?.code === 'user_banned') {
+      return { error: 'Sua conta foi desativada. Entre em contato com o administrador.' }
+    }
+    return { error: 'Email ou senha inválidos' }
+  }
 
   await registrarLog({
     userId: data.user.id,

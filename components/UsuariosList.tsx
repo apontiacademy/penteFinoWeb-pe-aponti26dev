@@ -27,7 +27,8 @@ import {
 import {
   Loader2,
   Shield,
-  Trash2,
+  UserX,
+  UserCheck,
   User,
   Pencil,
   Phone,
@@ -35,7 +36,8 @@ import {
   Tag,
 } from 'lucide-react'
 import {
-  deletarUsuario,
+  desativarUsuario,
+  reativarUsuario,
   atualizarUsuario,
 } from '@/app/(protected)/configuracoes/usuarios/actions'
 
@@ -45,6 +47,7 @@ type UsuarioItem = {
   created_at: string
   app_metadata?: Record<string, unknown>
   user_metadata?: Record<string, unknown>
+  banned_until?: string | null
 }
 
 type EditForm = {
@@ -86,11 +89,26 @@ export function UsuariosList({
     }
   }, [editingUser])
 
-  function handleDelete(userId: string) {
+  function handleDesativar(userId: string) {
     setPendingId(userId)
     startDelete(async () => {
       try {
-        await deletarUsuario(userId)
+        await desativarUsuario(userId)
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Erro ao desativar usuário')
+      } finally {
+        setPendingId(null)
+      }
+    })
+  }
+
+  function handleReativar(userId: string) {
+    setPendingId(userId)
+    startDelete(async () => {
+      try {
+        await reativarUsuario(userId)
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Erro ao reativar usuário')
       } finally {
         setPendingId(null)
       }
@@ -124,6 +142,7 @@ export function UsuariosList({
           const funcao = (u.user_metadata?.funcao as string) ?? ''
           const isCurrentUser = u.id === currentUserId
           const isLoadingThis = pendingId === u.id && isDeleting
+          const isDesativado = !!u.banned_until && new Date(u.banned_until) > new Date()
 
           return (
             <li
@@ -160,6 +179,11 @@ export function UsuariosList({
                     {isCurrentUser && (
                       <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
                         você
+                      </span>
+                    )}
+                    {isDesativado && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-destructive/10 text-destructive uppercase tracking-wide shrink-0">
+                        inativo
                       </span>
                     )}
                   </div>
@@ -208,7 +232,17 @@ export function UsuariosList({
                       <Pencil className="w-3.5 h-3.5" />
                     </Button>
 
-                    {!isCurrentUser && (
+                    {!isCurrentUser && isDesativado && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+                        onClick={() => handleReativar(u.id)}
+                      >
+                        <UserCheck className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
+                    {!isCurrentUser && !isDesativado && (
                       <AlertDialog>
                         <AlertDialogTrigger
                           render={
@@ -219,23 +253,26 @@ export function UsuariosList({
                             />
                           }
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <UserX className="w-3.5 h-3.5" />
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Deletar usuário?</AlertDialogTitle>
+                            <AlertDialogTitle>Desativar usuário?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              O usuário <strong>{nome || u.email}</strong> será removido
-                              permanentemente. Esta ação não pode ser desfeita.
+                              O usuário <strong>{nome || u.email}</strong> perderá o acesso ao
+                              sistema. Sessões abertas são encerradas imediatamente quando
+                              possível, mas um token de acesso já emitido pode continuar válido
+                              por até 1 hora. Você pode reativar o acesso depois, a qualquer
+                              momento.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() => handleDelete(u.id)}
+                              onClick={() => handleDesativar(u.id)}
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >
-                              Deletar
+                              Desativar
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
