@@ -26,7 +26,7 @@ export function CriarUsuarioDialog() {
           <DialogHeader>
             <DialogTitle>Novo usuário</DialogTitle>
             <p className="text-xs text-muted-foreground">
-              O usuário receberá acesso imediato — não é necessário confirmar email.
+              Uma senha será gerada automaticamente e enviada por email para o novo usuário.
             </p>
           </DialogHeader>
           <CriarUsuarioForm onSuccess={() => setOpen(false)} />
