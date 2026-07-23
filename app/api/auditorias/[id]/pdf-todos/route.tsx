@@ -6,6 +6,8 @@ import { indexarRespostasPorAluno, type RespostaPergunta } from '@/lib/pente-fin
 import { agruparRelatoriosPorMes } from '@/lib/relatorio-mes'
 import { RelatorioAlunoPDF } from '@/lib/pdf/RelatorioAlunoPDF'
 
+export const maxDuration = 300
+
 type AlunoResultado = {
   nomeCompleto: string
   estado: string
@@ -94,6 +96,7 @@ export async function GET(
   const mesesBase = agruparRelatoriosPorMes(relatoriosIndexados)
 
   const zip = new JSZip()
+  const caminhosUsados = new Set<string>()
 
   for (const aluno of alunos) {
     const meses = mesesBase.map((grupo) => ({
@@ -113,14 +116,21 @@ export async function GET(
       />
     )
 
-    const caminho = `${sanitizarCaminho(aluno.estado || 'Sem núcleo')}/${sanitizarCaminho(
+    let caminho = `${sanitizarCaminho(aluno.estado || 'Sem núcleo')}/${sanitizarCaminho(
       aluno.empresa || 'Sem empresa'
     )}/${sanitizarCaminho(aluno.nomeCompleto)}.pdf`
+
+    if (caminhosUsados.has(caminho)) {
+      caminho = `${sanitizarCaminho(aluno.estado || 'Sem núcleo')}/${sanitizarCaminho(
+        aluno.empresa || 'Sem empresa'
+      )}/${sanitizarCaminho(aluno.nomeCompleto)}-${aluno.identificador}.pdf`
+    }
+    caminhosUsados.add(caminho)
 
     zip.file(caminho, buffer)
   }
 
-  const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' })
+  const zipBuffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' })
 
   return new NextResponse(new Uint8Array(zipBuffer), {
     headers: {
