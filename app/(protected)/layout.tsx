@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NavLinks } from '@/components/NavLinks'
 import { UserMenu } from '@/components/UserMenu'
 import { Logomark } from '@/components/Logomark'
+import { ScrollToTopButton } from '@/components/ScrollToTopButton'
 
 export default async function ProtectedLayout({
   children,
@@ -46,6 +47,7 @@ export default async function ProtectedLayout({
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-5xl">{children}</main>
+      <ScrollToTopButton />
     </div>
   )
 }
