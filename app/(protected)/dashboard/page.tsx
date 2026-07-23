@@ -69,6 +69,7 @@ export default async function DashboardPage() {
     .map((r) => ({
       nome: r.nomeCompleto.split(' ').slice(0, 2).join(' '),
       ausencias: r.totalAusencias,
+      pct: totalRelatorios ? Math.round((r.totalAusencias / totalRelatorios) * 100) : 0,
     }))
 
   const ufMap: Record<string, { total: number; emDia: number }> = {}

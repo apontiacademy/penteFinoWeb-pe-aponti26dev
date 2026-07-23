@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 
 type Props = {
   evolucao: { data: string; cumprimento: number }[]
-  rankingAusencias: { nome: string; ausencias: number }[]
+  rankingAusencias: { nome: string; ausencias: number; pct: number }[]
   distribuicaoPorUF: { uf: string; pct: number; total: number }[]
 }
 
@@ -41,6 +41,14 @@ function ufColor(pct: number) {
   if (pct >= 80) return 'oklch(0.6 0.18 150)'
   if (pct >= 60) return 'oklch(0.75 0.16 80)'
   return 'oklch(0.577 0.245 27.325)'
+}
+
+function ausenciaColor(pct: number) {
+  if (pct >= 100) return 'oklch(0.577 0.245 27.325)' // vermelho — faltou em todos
+  if (pct >= 76) return 'oklch(0.452 0.286 294)' // roxo
+  if (pct >= 51) return 'oklch(0.75 0.16 80)' // laranja
+  if (pct >= 26) return 'oklch(0.6 0.18 150)' // verde
+  return 'oklch(0.55 0.2 250)' // azul
 }
 
 export function DashboardCharts({ evolucao, rankingAusencias, distribuicaoPorUF }: Props) {
@@ -144,7 +152,11 @@ export function DashboardCharts({ evolucao, rankingAusencias, distribuicaoPorUF 
                     />
                   }
                 />
-                <Bar dataKey="ausencias" radius={[0, 4, 4, 0]} fill="var(--color-ausencias)" />
+                <Bar dataKey="ausencias" radius={[0, 4, 4, 0]}>
+                  {rankingAusencias.map((entry, i) => (
+                    <Cell key={i} fill={ausenciaColor(entry.pct)} />
+                  ))}
+                </Bar>
               </BarChart>
             </ChartContainer>
           </CardContent>
