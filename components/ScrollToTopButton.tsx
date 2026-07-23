@@ -29,6 +29,7 @@ export function ScrollToTopButton() {
       size="icon-lg"
       aria-label="Voltar ao topo"
       onClick={handleClick}
+      tabIndex={visivel ? undefined : -1}
       className={cn(
         'fixed bottom-6 left-6 z-40 rounded-full shadow-lg transition-opacity',
         visivel ? 'opacity-100' : 'pointer-events-none opacity-0'
