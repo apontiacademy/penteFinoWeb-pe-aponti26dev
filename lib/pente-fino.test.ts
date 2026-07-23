@@ -313,6 +313,15 @@ describe('indexarRespostasPorAluno', () => {
     ])
   })
 
+  it('indexa múltiplos alunos do mesmo CSV numa única chamada', () => {
+    const indice = indexarRespostasPorAluno(CSV_REL_COM_PERGUNTAS, 'ID')
+    expect(indice.size).toBe(2)
+    expect(indice.get('P1')).toEqual([
+      { pergunta: 'Como foi a semana?', resposta: 'Corrido mas produtivo' },
+      { pergunta: 'Teve alguma dificuldade?', resposta: 'Sim, prazo apertado' },
+    ])
+  })
+
   it('aluno ausente do CSV não aparece no índice', () => {
     const indice = indexarRespostasPorAluno(CSV_REL_COM_PERGUNTAS, 'ID')
     expect(indice.has('NAO_EXISTE')).toBe(false)

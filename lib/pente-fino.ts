@@ -257,7 +257,8 @@ export function calcularPresencas(
 
 export type RespostaPergunta = { pergunta: string; resposta: string }
 
-// Chave: identificador do aluno. Ausente do mapa = aluno não enviou esse relatório.
+// Ausente do mapa = aluno não enviou esse relatório.
+// Presente com array vazio = aluno enviou, mas o CSV não tem nenhuma coluna de pergunta numerada.
 export function indexarRespostasPorAluno(
   csvText: string,
   idColuna: string
@@ -271,7 +272,9 @@ export function indexarRespostasPorAluno(
   const idKey = meta.fields?.find((f) => f === idColuna)
   if (!idKey) return mapa
 
-  const colunasPergunta = (meta.fields ?? []).filter((f) => /^\d+\./.test(f.trim()))
+  const colunasPergunta = (meta.fields ?? []).filter(
+    (f) => f !== idKey && /^\d+\./.test(f.trim())
+  )
 
   for (const row of data) {
     const identificador = (row[idKey] ?? '').trim()
