@@ -3,6 +3,7 @@ export type PontoAuditoria = { createdAt: string; cumprimento: number }
 const DIA_MS = 24 * 60 * 60 * 1000
 const JANELA_DIAS = 15
 
+// Aritmética de dias em ms só é segura pq América/São Paulo é UTC-3 fixo (sem horário de verão desde 2019)
 function paraDiaISO(date: Date): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(date)
 }

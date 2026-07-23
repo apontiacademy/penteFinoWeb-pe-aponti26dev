@@ -24,6 +24,16 @@ describe('montarEvolucao15Dias', () => {
     expect(resultado[0].cumprimento).toBe(90)
   })
 
+  it('usa a auditoria de maior created_at mesmo se ela vier primeiro no array', () => {
+    const auditorias: PontoAuditoria[] = [
+      { createdAt: dia(0, '18:00:00'), cumprimento: 90 },
+      { createdAt: dia(0, '08:00:00'), cumprimento: 50 },
+    ]
+    const resultado = montarEvolucao15Dias(auditorias, null, HOJE)
+    expect(resultado).toHaveLength(1)
+    expect(resultado[0].cumprimento).toBe(90)
+  })
+
   it('herda o valor do dia anterior quando um dia não tem auditoria', () => {
     const auditorias: PontoAuditoria[] = [
       { createdAt: dia(2), cumprimento: 70 },
