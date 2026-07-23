@@ -40,7 +40,7 @@ export default async function DashboardPage() {
     supabase
       .from('auditorias')
       .select('created_at, resultado_json')
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
       .limit(10),
   ])
 
@@ -75,7 +75,7 @@ export default async function DashboardPage() {
     .sort((a, b) => b.total - a.total)
     .slice(0, 12)
 
-  const evolucao = (historico ?? []).map((a) => {
+  const evolucao = [...(historico ?? [])].reverse().map((a) => {
     const res = a.resultado_json as Resultado | null
     const nf = res?.nao_feitos ?? []
     const total = nf.length
