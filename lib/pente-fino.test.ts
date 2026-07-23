@@ -344,4 +344,11 @@ A1,João Segundo,Resposta 2`
     const indice = indexarRespostasPorAluno(csvDuplicado, 'ID')
     expect(indice.get('A1')).toEqual([{ pergunta: 'Pergunta', resposta: 'Resposta 2' }])
   })
+
+  it('coluna de identificador que casa com o padrão de pergunta não vaza como resposta', () => {
+    const csvIdColideComPergunta = `1. Matrícula,Nome completo,2. Como foi a semana?
+A1,João Silva,Foi tranquila`
+    const indice = indexarRespostasPorAluno(csvIdColideComPergunta, '1. Matrícula')
+    expect(indice.get('A1')).toEqual([{ pergunta: 'Como foi a semana?', resposta: 'Foi tranquila' }])
+  })
 })
