@@ -18,7 +18,7 @@ type ResultadoJson = {
 }
 
 function sanitizarCaminho(texto: string): string {
-  return texto.replace(/[\\/*?:"<>|]/g, '').trim()
+  return texto.replace(/[\\/*?:"<>|\r\n]/g, '').trim()
 }
 
 export async function GET(
@@ -98,14 +98,20 @@ export async function GET(
 
   const meses = agruparRelatoriosPorMes(relatoriosComRespostas)
 
-  const buffer = await renderToBuffer(
-    <RelatorioAlunoPDF
-      nome={aluno.nomeCompleto}
-      estado={aluno.estado}
-      empresa={aluno.empresa}
-      meses={meses}
-    />
-  )
+  let buffer: Buffer
+  try {
+    buffer = await renderToBuffer(
+      <RelatorioAlunoPDF
+        nome={aluno.nomeCompleto}
+        estado={aluno.estado}
+        empresa={aluno.empresa}
+        meses={meses}
+      />
+    )
+  } catch (error) {
+    console.error('Falha ao renderizar PDF do aluno', error)
+    return NextResponse.json({ error: 'Falha ao gerar o PDF' }, { status: 500 })
+  }
 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
