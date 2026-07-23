@@ -22,7 +22,8 @@ export default async function DashboardPage() {
   if (!user) redirect('/login')
 
   const hoje = new Date()
-  const inicioJanela = inicioDaJanela(hoje, 16) // 1 dia de margem de segurança pra query
+  const inicioJanela = inicioDaJanela(hoje, 16) // 1 dia de margem de segurança pra query historico
+  const inicioJanelaReal = inicioDaJanela(hoje, 15) // inicio real da janela de 15 dias, usado pro seed de auditoriaAnterior
 
   const [
     { count: totalAuditorias },
@@ -49,7 +50,7 @@ export default async function DashboardPage() {
     supabase
       .from('auditorias')
       .select('created_at, resultado_json')
-      .lt('created_at', inicioJanela.toISOString())
+      .lt('created_at', inicioJanelaReal.toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
