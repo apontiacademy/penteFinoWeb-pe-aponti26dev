@@ -92,6 +92,8 @@ export function RelatorioAlunoPDF({ nome, estado, empresa, meses }: RelatorioAlu
                 <Text style={styles.reportHeader}>{rel.nome}</Text>
                 {rel.respostas === null ? (
                   <Text style={styles.answer}>Não enviado</Text>
+                ) : rel.respostas.length === 0 ? (
+                  <Text style={styles.answer}>Sem perguntas registradas neste relatório</Text>
                 ) : (
                   rel.respostas.map((r, i) => (
                     <View key={i}>
