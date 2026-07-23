@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { BarChart3, FileText, Users, TrendingUp } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DashboardCharts } from '@/components/DashboardCharts'
+import { montarEvolucao15Dias, inicioDaJanela, type PontoAuditoria } from '@/lib/evolucao-dashboard'
 
 type NaoFeito = {
   nomeCompleto: string
@@ -20,11 +21,16 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const hoje = new Date()
+  const inicioJanela = inicioDaJanela(hoje, 16) // 1 dia de margem de segurança pra query historico
+  const inicioJanelaReal = inicioDaJanela(hoje, 15) // inicio real da janela de 15 dias, usado pro seed de auditoriaAnterior
+
   const [
     { count: totalAuditorias },
     { count: totalRelatorios },
     { data: ultimaAuditoria },
     { data: historico },
+    { data: auditoriaAnterior },
   ] = await Promise.all([
     supabase.from('auditorias').select('*', { count: 'exact', head: true }),
     supabase
@@ -40,8 +46,14 @@ export default async function DashboardPage() {
     supabase
       .from('auditorias')
       .select('created_at, resultado_json')
-      .order('created_at', { ascending: true })
-      .limit(10),
+      .gte('created_at', inicioJanela.toISOString()),
+    supabase
+      .from('auditorias')
+      .select('created_at, resultado_json')
+      .lt('created_at', inicioJanelaReal.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ])
 
   const resultado = ultimaAuditoria?.resultado_json as Resultado | null
@@ -57,6 +69,7 @@ export default async function DashboardPage() {
     .map((r) => ({
       nome: r.nomeCompleto.split(' ').slice(0, 2).join(' '),
       ausencias: r.totalAusencias,
+      pct: totalRelatorios ? Math.round((r.totalAusencias / totalRelatorios) * 100) : 0,
     }))
 
   const ufMap: Record<string, { total: number; emDia: number }> = {}
@@ -75,19 +88,27 @@ export default async function DashboardPage() {
     .sort((a, b) => b.total - a.total)
     .slice(0, 12)
 
-  const evolucao = (historico ?? []).map((a) => {
-    const res = a.resultado_json as Resultado | null
-    const nf = res?.nao_feitos ?? []
+  function calcularCumprimento(resultadoJson: unknown): number {
+    const nf = (resultadoJson as Resultado | null)?.nao_feitos ?? []
     const total = nf.length
     const emDia = nf.filter((r) => r.totalAusencias === 0).length
-    return {
-      data: new Date(a.created_at).toLocaleDateString('pt-BR', {
-        timeZone: 'America/Sao_Paulo',
-        day: '2-digit',
-        month: '2-digit',
-      }),
-      cumprimento: total > 0 ? Math.round((emDia / total) * 100) : 0,
-    }
+    return total > 0 ? Math.round((emDia / total) * 100) : 0
+  }
+
+  const pontosHistorico: PontoAuditoria[] = (historico ?? []).map((a) => ({
+    createdAt: a.created_at,
+    cumprimento: calcularCumprimento(a.resultado_json),
+  }))
+  const pontoAnterior: PontoAuditoria | null = auditoriaAnterior
+    ? {
+        createdAt: auditoriaAnterior.created_at,
+        cumprimento: calcularCumprimento(auditoriaAnterior.resultado_json),
+      }
+    : null
+
+  const evolucao = montarEvolucao15Dias(pontosHistorico, pontoAnterior, hoje).map((p) => {
+    const [, mes, dia] = p.diaISO.split('-')
+    return { data: `${dia}/${mes}`, cumprimento: p.cumprimento }
   })
 
   const highlightClass = (pct: number) =>
