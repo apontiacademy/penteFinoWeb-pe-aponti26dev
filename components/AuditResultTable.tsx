@@ -54,6 +54,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Spinner } from '@/components/ui/spinner'
+import { toast } from 'sonner'
 
 type NaoFeito = {
   nomeCompleto: string
@@ -91,6 +94,31 @@ function SortIcon({ col, sortCol, sortDir }: { col: SortCol; sortCol: SortCol; s
     : <ArrowDown className="w-3 h-3 text-primary shrink-0" />
 }
 
+async function baixarArquivo(url: string, nomeFallback: string) {
+  const res = await fetch(url)
+  if (!res.ok) {
+    let mensagem = 'Falha ao baixar arquivo'
+    try {
+      const corpo = await res.json()
+      if (corpo?.error) mensagem = corpo.error
+    } catch {
+      // resposta sem corpo JSON, mantém mensagem genérica
+    }
+    throw new Error(mensagem)
+  }
+
+  const nomeArquivo = res.headers.get('Content-Disposition')?.match(/filename="([^"]+)"/)?.[1] ?? nomeFallback
+  const blob = await res.blob()
+  const objectUrl = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = objectUrl
+  link.download = nomeArquivo
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(objectUrl)
+}
+
 export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
   const [modo, setModo] = useState<'nao_feitos' | 'feitos'>('nao_feitos')
   const [page, setPage] = useState(1)
@@ -103,6 +131,37 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
   )
   const ufsAnchor = useComboboxAnchor()
   const isNF = modo === 'nao_feitos'
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const [downloadingZip, setDownloadingZip] = useState(false)
+
+  async function handleBaixarPdf(row: { identificador?: string; nomeCompleto: string }) {
+    if (!row.identificador) return
+    setDownloadingId(row.identificador)
+    try {
+      await baixarArquivo(
+        `/api/auditorias/${auditId}/pdf-aluno/${encodeURIComponent(row.identificador)}`,
+        `${row.nomeCompleto}.pdf`
+      )
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Falha ao gerar o PDF')
+    } finally {
+      setDownloadingId(null)
+    }
+  }
+
+  async function handleBaixarZip() {
+    setDownloadingZip(true)
+    try {
+      await baixarArquivo(
+        `/api/auditorias/${auditId}/pdf-todos`,
+        `relatorios-auditoria-${auditId}.zip`
+      )
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Falha ao gerar o zip')
+    } finally {
+      setDownloadingZip(false)
+    }
+  }
 
   function handleModo(v: typeof modo) {
     setModo(v)
@@ -243,10 +302,10 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
 
         <DropdownMenu>
           <DropdownMenuTrigger
-            render={<Button variant="outline" size="sm" className="gap-1.5" />}
+            render={<Button variant="outline" size="sm" className="gap-1.5" disabled={downloadingZip} />}
           >
-            <Download className="w-3.5 h-3.5" />
-            Baixar
+            {downloadingZip ? <Spinner className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}
+            {downloadingZip ? 'Gerando zip...' : 'Baixar'}
             <ChevronDown className="w-3.5 h-3.5" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -257,10 +316,7 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
               Baixar CSV
             </DropdownMenuItem>
             {temIdentificador && (
-              <DropdownMenuItem
-                render={<a href={`/api/auditorias/${auditId}/pdf-todos`} download />}
-                className="cursor-pointer"
-              >
+              <DropdownMenuItem onClick={handleBaixarZip} className="cursor-pointer">
                 Baixar todos os PDFs (.zip)
               </DropdownMenuItem>
             )}
@@ -455,20 +511,26 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
                     </TableCell>
                     <TableCell className="py-3 text-right">
                       {row.identificador && (
-                        <Button
-                          nativeButton={false}
-                          render={
-                            <a
-                              href={`/api/auditorias/${auditId}/pdf-aluno/${encodeURIComponent(row.identificador)}`}
-                              download
-                            />
-                          }
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Gerar PDF de ${row.nomeCompleto}`}
-                        >
-                          <FileDown className="w-3.5 h-3.5" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label={`Gerar PDF de ${row.nomeCompleto}`}
+                                disabled={downloadingId === row.identificador}
+                                onClick={() => handleBaixarPdf(row)}
+                              />
+                            }
+                          >
+                            {downloadingId === row.identificador ? (
+                              <Spinner className="w-3.5 h-3.5" />
+                            ) : (
+                              <FileDown className="w-3.5 h-3.5" />
+                            )}
+                          </TooltipTrigger>
+                          <TooltipContent>Baixar PDF completo</TooltipContent>
+                        </Tooltip>
                       )}
                     </TableCell>
                   </TableRow>
