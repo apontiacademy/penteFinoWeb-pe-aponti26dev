@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { gerarXlsxAuditoria } from '@/lib/gerar-xlsx'
+import type { ResultadoAusencia, ResultadoPresenca } from '@/lib/pente-fino'
 
 export async function GET(
   request: NextRequest,
@@ -15,6 +17,44 @@ export async function GET(
   }
 
   const { id } = await params
+  const service = createServiceClient()
+  const formato = request.nextUrl.searchParams.get('formato') ?? 'csv'
+
+  if (formato === 'xlsx') {
+    const { data: auditoria } = await service
+      .from('auditorias')
+      .select('resultado_json')
+      .eq('id', id)
+      .single()
+
+    if (!auditoria) {
+      return NextResponse.json({ error: 'Auditoria não encontrada' }, { status: 404 })
+    }
+
+    const resultado = auditoria.resultado_json as
+      | { nao_feitos: ResultadoAusencia[]; feitos: ResultadoPresenca[] }
+      | null
+
+    if (!resultado) {
+      return NextResponse.json({ error: 'Resultado não disponível' }, { status: 404 })
+    }
+
+    let buffer
+    try {
+      buffer = await gerarXlsxAuditoria(resultado.nao_feitos ?? [], resultado.feitos ?? [])
+    } catch (error) {
+      console.error('Falha ao gerar XLSX da auditoria', error)
+      return NextResponse.json({ error: 'Falha ao gerar o XLSX' }, { status: 500 })
+    }
+
+    return new NextResponse(buffer, {
+      headers: {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': `attachment; filename="resultado-auditoria-${id}.xlsx"`,
+      },
+    })
+  }
+
   const modo = request.nextUrl.searchParams.get('modo') as
     | 'nao_feitos'
     | 'feitos'
@@ -27,7 +67,6 @@ export async function GET(
     )
   }
 
-  const service = createServiceClient()
   const { data: auditoria } = await service
     .from('auditorias')
     .select('resultado_nao_feitos_path, resultado_feitos_path')
