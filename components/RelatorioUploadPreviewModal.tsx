@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -47,12 +47,14 @@ export function RelatorioUploadPreviewModal({
   onCancel,
 }: Props) {
   const [staged, setStaged] = useState<ArquivoStaged[]>([])
+  const [openAnterior, setOpenAnterior] = useState(open)
 
-  useEffect(() => {
+  if (open !== openAnterior) {
+    setOpenAnterior(open)
     if (open) {
       setStaged(arquivos.map((file) => ({ id: crypto.randomUUID(), file })))
     }
-  }, [open, arquivos])
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -84,13 +86,18 @@ export function RelatorioUploadPreviewModal({
         <DialogHeader>
           <DialogTitle>Confirmar ordem dos relatórios</DialogTitle>
           <DialogDescription>
-            Arraste pra reordenar. Essa vai ser a numeração final.
+            Arraste para reordenar. Essa vai ser a numeração final.
           </DialogDescription>
         </DialogHeader>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={staged.map((a) => a.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+              {staged.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Nenhum arquivo selecionado.
+                </p>
+              )}
               {staged.map((item, index) => (
                 <ItemArrastavel
                   key={item.id}
