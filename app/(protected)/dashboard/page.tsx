@@ -161,7 +161,11 @@ export default async function DashboardPage() {
           </p>
         </div>
         {ultimaAuditoria && (
-          <Button variant="outline" render={<Link href={`/auditorias/${ultimaAuditoria.id}`} />}>
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={<Link href={`/auditorias/${ultimaAuditoria.id}`} />}
+          >
             Ver última auditoria
             <ArrowRight data-icon="inline-end" />
           </Button>
