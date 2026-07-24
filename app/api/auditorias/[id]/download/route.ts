@@ -39,12 +39,18 @@ export async function GET(
       return NextResponse.json({ error: 'Resultado não disponível' }, { status: 404 })
     }
 
-    const buffer = await gerarXlsxAuditoria(resultado.nao_feitos, resultado.feitos)
+    let buffer
+    try {
+      buffer = await gerarXlsxAuditoria(resultado.nao_feitos ?? [], resultado.feitos ?? [])
+    } catch (error) {
+      console.error('Falha ao gerar XLSX da auditoria', error)
+      return NextResponse.json({ error: 'Falha ao gerar o XLSX' }, { status: 500 })
+    }
 
     return new NextResponse(buffer, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': 'attachment; filename="resultado-auditoria.xlsx"',
+        'Content-Disposition': `attachment; filename="resultado-auditoria-${id}.xlsx"`,
       },
     })
   }
