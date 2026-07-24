@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { gerarAuditoria } from '@/lib/gerar-auditoria'
 import { registrarLog } from '@/lib/system-log'
 import { planilhaTemColuna } from '@/lib/pente-fino'
+import { proximoNumeroRelatorio } from '@/lib/relatorio-numero'
 
 async function verificarAdmin() {
   const supabase = await createClient()
@@ -71,13 +72,7 @@ export async function adicionarRelatorios(
       return { error: `Erro ao consultar relatórios existentes: ${errAtivos.message}` }
     }
 
-    const maiorNumero = (relatoriosAtivos ?? []).reduce((max, r) => {
-      const match = /^Relatório (\d+)$/.exec(r.nome)
-      const numero = match ? parseInt(match[1], 10) : 0
-      return Math.max(max, numero)
-    }, 0)
-
-    let proximoNumero = maiorNumero + 1
+    let proximoNumero = proximoNumeroRelatorio((relatoriosAtivos ?? []).map((r) => r.nome))
 
     for (const arquivo of arquivos) {
       const nome = `Relatório ${proximoNumero}`

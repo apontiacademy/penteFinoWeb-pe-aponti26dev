@@ -10,6 +10,7 @@ import {
 import { RelatoriosList } from '@/components/RelatoriosList'
 import { AdicionarRelatorioForm } from '@/components/AdicionarRelatorioForm'
 import { GerarAuditoriaButton } from '@/components/GerarAuditoriaButton'
+import { proximoNumeroRelatorio } from '@/lib/relatorio-numero'
 import { FileText } from 'lucide-react'
 
 export default async function RelatoriosPage() {
@@ -25,6 +26,8 @@ export default async function RelatoriosPage() {
     .select('id, nome, semana, created_at')
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
+
+  const numeroInicial = proximoNumeroRelatorio((relatorios ?? []).map((r) => r.nome))
 
   return (
     <div className="space-y-6">
@@ -49,7 +52,7 @@ export default async function RelatoriosPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <AdicionarRelatorioForm />
+          <AdicionarRelatorioForm numeroInicial={numeroInicial} />
         </CardContent>
       </Card>
 
