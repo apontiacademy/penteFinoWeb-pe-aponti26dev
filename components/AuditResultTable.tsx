@@ -330,6 +330,12 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
             >
               Baixar CSV
             </DropdownMenuItem>
+            <DropdownMenuItem
+              render={<a href={`/api/auditorias/${auditId}/download?formato=xlsx`} download />}
+              className="cursor-pointer"
+            >
+              Baixar XLSX
+            </DropdownMenuItem>
             {temIdentificador && (
               <DropdownMenuItem onClick={handleBaixarZip} className="cursor-pointer">
                 Baixar todos os PDFs (.zip)
