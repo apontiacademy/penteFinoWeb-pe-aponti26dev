@@ -20,18 +20,18 @@ export function RelatoriosIncluidosCard({ relatorios }: Props) {
 
   return (
     <Card className="shadow-sm border-border/60">
-      <Collapsible defaultOpen>
+      <Collapsible>
         <CardHeader className="pb-3">
           <CollapsibleTrigger
-            render={<Button variant="ghost" className="w-full justify-between px-0 hover:bg-transparent" />}
+            render={<Button variant="ghost" className="w-full justify-between px-2" />}
           >
             <CardTitle className="text-sm font-semibold text-foreground/70 uppercase tracking-wider">
               Relatórios incluídos ({relatorios.length})
             </CardTitle>
-            <ChevronDown className="w-4 h-4 text-foreground/50 transition-transform group-data-panel-open/button:rotate-180" />
+            <ChevronDown className="w-4 h-4 text-foreground/50 transition-transform duration-300 group-data-panel-open/button:rotate-180" />
           </CollapsibleTrigger>
         </CardHeader>
-        <CollapsibleContent>
+        <CollapsibleContent className="h-(--collapsible-panel-height) overflow-hidden transition-all duration-300 ease-in-out data-starting-style:h-0 data-starting-style:opacity-0 data-ending-style:h-0 data-ending-style:opacity-0">
           <CardContent className="flex flex-wrap gap-2 pt-0">
             {relatorios.map((r) => (
               <div
