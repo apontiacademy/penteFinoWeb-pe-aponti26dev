@@ -10,6 +10,7 @@ import {
   calcularAusencias,
   calcularPresencas,
   planilhaTemColuna,
+  indexarRespostasPorAluno,
 } from './pente-fino'
 
 // Formato A: coluna "residente" (estado fica vazio, empresa da coluna "empresa") + coluna de ID
@@ -272,5 +273,82 @@ describe('integração: fallback de UF do relatório semanal', () => {
     const maria = enriquecidos.find((a) => a.identificador === 'A2')!
     // Maria não aparece em nenhum relatório com Grupos preenchido — segue vazia
     expect(maria.estado).toBe('')
+  })
+})
+
+describe('calcularAusencias — identificador propagado', () => {
+  it('inclui o identificador do aluno no resultado', () => {
+    const alunos = carregarAlunos(CSV_ALUNOS_A, 'ID')
+    const rel = carregarRelatorio(CSV_REL_COM_COLUNA, 'ID')!
+    const resultado = calcularAusencias(alunos, { 'Relatório 1': rel })
+
+    const joao = resultado.find((r) => r.nomeCompleto.toLowerCase().includes('joão'))!
+    expect(joao.identificador).toBe('A1')
+  })
+})
+
+describe('calcularPresencas — identificador propagado', () => {
+  it('inclui o identificador do aluno no resultado', () => {
+    const alunos = carregarAlunos(CSV_ALUNOS_A, 'ID')
+    const rel = carregarRelatorio(CSV_REL_COM_COLUNA, 'ID')!
+    const resultado = calcularPresencas(alunos, { 'Relatório 1': rel })
+
+    const joao = resultado.find((r) => r.nomeCompleto.toLowerCase().includes('joão'))!
+    expect(joao.identificador).toBe('A1')
+  })
+})
+
+const CSV_REL_COM_PERGUNTAS = `ID,Nome completo,1. Como foi a semana?,2. Teve alguma dificuldade?
+A1,João Silva,Foi tranquila,Não
+P1,Pedro Lima,Corrido mas produtivo,"Sim, prazo apertado"`
+
+describe('indexarRespostasPorAluno', () => {
+  it('indexa as respostas de cada aluno pelas colunas de pergunta numeradas', () => {
+    const indice = indexarRespostasPorAluno(CSV_REL_COM_PERGUNTAS, 'ID')
+    const respostasJoao = indice.get('A1')
+
+    expect(respostasJoao).toEqual([
+      { pergunta: 'Como foi a semana?', resposta: 'Foi tranquila' },
+      { pergunta: 'Teve alguma dificuldade?', resposta: 'Não' },
+    ])
+  })
+
+  it('indexa múltiplos alunos do mesmo CSV numa única chamada', () => {
+    const indice = indexarRespostasPorAluno(CSV_REL_COM_PERGUNTAS, 'ID')
+    expect(indice.size).toBe(2)
+    expect(indice.get('P1')).toEqual([
+      { pergunta: 'Como foi a semana?', resposta: 'Corrido mas produtivo' },
+      { pergunta: 'Teve alguma dificuldade?', resposta: 'Sim, prazo apertado' },
+    ])
+  })
+
+  it('aluno ausente do CSV não aparece no índice', () => {
+    const indice = indexarRespostasPorAluno(CSV_REL_COM_PERGUNTAS, 'ID')
+    expect(indice.has('NAO_EXISTE')).toBe(false)
+  })
+
+  it('retorna mapa vazio quando a coluna de identificador está ausente', () => {
+    const indice = indexarRespostasPorAluno(CSV_REL_SEM_COLUNA, 'ID')
+    expect(indice.size).toBe(0)
+  })
+
+  it('cada aluno mapeia para lista vazia quando não há coluna de pergunta numerada', () => {
+    const indice = indexarRespostasPorAluno(CSV_REL_COM_COLUNA, 'ID')
+    expect(indice.get('A1')).toEqual([])
+  })
+
+  it('identificador duplicado no CSV: a última linha vence', () => {
+    const csvDuplicado = `ID,Nome completo,1. Pergunta
+A1,João Primeiro,Resposta 1
+A1,João Segundo,Resposta 2`
+    const indice = indexarRespostasPorAluno(csvDuplicado, 'ID')
+    expect(indice.get('A1')).toEqual([{ pergunta: 'Pergunta', resposta: 'Resposta 2' }])
+  })
+
+  it('coluna de identificador que casa com o padrão de pergunta não vaza como resposta', () => {
+    const csvIdColideComPergunta = `1. Matrícula,Nome completo,2. Como foi a semana?
+A1,João Silva,Foi tranquila`
+    const indice = indexarRespostasPorAluno(csvIdColideComPergunta, '1. Matrícula')
+    expect(indice.get('A1')).toEqual([{ pergunta: 'Como foi a semana?', resposta: 'Foi tranquila' }])
   })
 })
