@@ -88,7 +88,8 @@ export function RelatorioUploadPreviewModal({
         <DialogHeader>
           <DialogTitle>Confirmar ordem dos relatórios</DialogTitle>
           <DialogDescription>
-            Arraste para reordenar. Essa vai ser a numeração final.
+            Arraste para reordenar. Essa vai ser a numeração aproximada — pode mudar se algum
+            arquivo falhar na validação.
           </DialogDescription>
         </DialogHeader>
 
