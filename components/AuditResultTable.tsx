@@ -45,12 +45,24 @@ import {
   ArrowUp,
   ArrowDown,
   X,
+  FileDown,
+  ChevronDown,
 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Spinner } from '@/components/ui/spinner'
+import { toast } from 'sonner'
 
 type NaoFeito = {
   nomeCompleto: string
   estado: string
   empresa: string
+  identificador?: string
   relatoriosAusentes: string
   totalAusencias: number
 }
@@ -59,6 +71,7 @@ type Feito = {
   nomeCompleto: string
   estado: string
   empresa: string
+  identificador?: string
   relatoriosFeitos: string
   totalFeitos: number
 }
@@ -81,6 +94,40 @@ function SortIcon({ col, sortCol, sortDir }: { col: SortCol; sortCol: SortCol; s
     : <ArrowDown className="w-3 h-3 text-primary shrink-0" />
 }
 
+async function baixarArquivo(url: string, nomeFallback: string) {
+  let res: Response
+  try {
+    res = await fetch(url)
+  } catch {
+    throw new Error('Falha de conexão ao baixar o arquivo')
+  }
+
+  if (!res.ok) {
+    let mensagem = 'Falha ao baixar arquivo'
+    try {
+      const corpo = await res.json()
+      if (corpo?.error) mensagem = corpo.error
+    } catch {
+      // resposta sem corpo JSON, mantém mensagem genérica
+    }
+    throw new Error(mensagem)
+  }
+
+  const nomeArquivo = res.headers.get('Content-Disposition')?.match(/filename="([^"]+)"/)?.[1] ?? nomeFallback
+  const blob = await res.blob()
+  const objectUrl = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = objectUrl
+  link.download = nomeArquivo
+  try {
+    document.body.appendChild(link)
+    link.click()
+  } finally {
+    link.remove()
+    URL.revokeObjectURL(objectUrl)
+  }
+}
+
 export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
   const [modo, setModo] = useState<'nao_feitos' | 'feitos'>('nao_feitos')
   const [page, setPage] = useState(1)
@@ -93,6 +140,43 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
   )
   const ufsAnchor = useComboboxAnchor()
   const isNF = modo === 'nao_feitos'
+  const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set())
+  const [downloadingZip, setDownloadingZip] = useState(false)
+
+  async function handleBaixarPdf(row: { identificador?: string; nomeCompleto: string }) {
+    const id = row.identificador
+    if (!id || downloadingIds.has(id)) return
+    setDownloadingIds((prev) => new Set(prev).add(id))
+    try {
+      await baixarArquivo(
+        `/api/auditorias/${auditId}/pdf-aluno/${encodeURIComponent(id)}`,
+        `${row.nomeCompleto}.pdf`
+      )
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Falha ao gerar o PDF')
+    } finally {
+      setDownloadingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }
+  }
+
+  async function handleBaixarZip() {
+    if (downloadingZip) return
+    setDownloadingZip(true)
+    try {
+      await baixarArquivo(
+        `/api/auditorias/${auditId}/pdf-todos`,
+        `relatorios-auditoria-${auditId}.zip`
+      )
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Falha ao gerar o zip')
+    } finally {
+      setDownloadingZip(false)
+    }
+  }
 
   function handleModo(v: typeof modo) {
     setModo(v)
@@ -125,6 +209,7 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
   }
 
   const hasFilters = filters.nome || filters.ufs.length > 0 || filters.empresa
+  const temIdentificador = naoFeitos.some((r) => r.identificador) || feitos.some((r) => r.identificador)
   const base = isNF ? naoFeitos : feitos
   const feitosPorNome = new Map(feitos.map((f) => [f.nomeCompleto, f.totalFeitos]))
 
@@ -230,12 +315,28 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
           </TabsList>
         </Tabs>
 
-        <a href={`/api/auditorias/${auditId}/download?modo=${modo}`} download>
-          <Button variant="outline" size="sm" className="gap-1.5">
-            <Download className="w-3.5 h-3.5" />
-            Baixar CSV
-          </Button>
-        </a>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={<Button variant="outline" size="sm" className="gap-1.5" />}
+          >
+            {downloadingZip ? <Spinner className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}
+            {downloadingZip ? 'Gerando zip...' : 'Baixar'}
+            <ChevronDown className="w-3.5 h-3.5" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              render={<a href={`/api/auditorias/${auditId}/download?modo=${modo}`} download />}
+              className="cursor-pointer"
+            >
+              Baixar CSV
+            </DropdownMenuItem>
+            {temIdentificador && (
+              <DropdownMenuItem onClick={handleBaixarZip} className="cursor-pointer">
+                Baixar todos os PDFs (.zip)
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Filter bar */}
@@ -346,12 +447,13 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
                   <SortIcon col="total" sortCol={sortCol} sortDir={sortDir} />
                 </button>
               </TableHead>
+              <TableHead className="py-3 w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {dados.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
                   Nenhum resultado para os filtros aplicados.
                 </TableCell>
               </TableRow>
@@ -420,6 +522,30 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
                         >
                           {count}
                         </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-3 text-right">
+                      {row.identificador && (
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label={`Gerar PDF de ${row.nomeCompleto}`}
+                                disabled={downloadingIds.has(row.identificador)}
+                                onClick={() => handleBaixarPdf(row)}
+                              />
+                            }
+                          >
+                            {downloadingIds.has(row.identificador) ? (
+                              <Spinner className="w-3.5 h-3.5" />
+                            ) : (
+                              <FileDown className="w-3.5 h-3.5" />
+                            )}
+                          </TooltipTrigger>
+                          <TooltipContent>Baixar PDF completo</TooltipContent>
+                        </Tooltip>
                       )}
                     </TableCell>
                   </TableRow>
