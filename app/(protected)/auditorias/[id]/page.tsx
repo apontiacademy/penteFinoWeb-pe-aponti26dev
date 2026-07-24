@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { AuditResultTable } from '@/components/AuditResultTable'
+import { RelatoriosIncluidosCard } from '@/components/RelatoriosIncluidosCard'
 import { ArrowLeft, Calendar, FileText } from 'lucide-react'
 import { TRIGGER_INFO } from '@/lib/trigger-info'
 
@@ -96,28 +97,7 @@ export default async function AuditoriaDetailPage({
       </div>
 
       {/* Relatórios incluídos */}
-      {relatorios && relatorios.length > 0 && (
-        <Card className="shadow-sm border-border/60">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-foreground/70 uppercase tracking-wider">
-              Relatórios incluídos
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            {relatorios.map((r) => (
-              <div
-                key={r.id}
-                className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5"
-              >
-                <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
-                <span className="text-sm font-medium text-foreground">{r.nome}</span>
-                <span className="w-px h-3 bg-border" />
-                <span className="text-xs text-muted-foreground">{r.semana}</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      <RelatoriosIncluidosCard relatorios={relatorios ?? []} />
 
       {/* Resultado */}
       {resultado ? (
