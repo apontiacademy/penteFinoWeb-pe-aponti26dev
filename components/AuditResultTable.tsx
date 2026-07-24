@@ -135,6 +135,7 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
   }
 
   const hasFilters = filters.nome || filters.ufs.length > 0 || filters.empresa
+  const temIdentificador = naoFeitos.some((r) => r.identificador) || feitos.some((r) => r.identificador)
   const base = isNF ? naoFeitos : feitos
   const feitosPorNome = new Map(feitos.map((f) => [f.nomeCompleto, f.totalFeitos]))
 
@@ -255,12 +256,14 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
             >
               Baixar CSV
             </DropdownMenuItem>
-            <DropdownMenuItem
-              render={<a href={`/api/auditorias/${auditId}/pdf-todos`} download />}
-              className="cursor-pointer"
-            >
-              Baixar todos os PDFs (.zip)
-            </DropdownMenuItem>
+            {temIdentificador && (
+              <DropdownMenuItem
+                render={<a href={`/api/auditorias/${auditId}/pdf-todos`} download />}
+                className="cursor-pointer"
+              >
+                Baixar todos os PDFs (.zip)
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -21,7 +21,8 @@ type ResultadoJson = {
 }
 
 function sanitizarCaminho(texto: string): string {
-  return texto.replace(/[\\/*?:"<>|\r\n]/g, '').trim()
+  const limpo = texto.replace(/[\\/*?:"<>|\r\n]/g, '').trim()
+  return limpo === '' || /^\.+$/.test(limpo) ? '_' : limpo
 }
 
 export async function GET(
