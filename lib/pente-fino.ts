@@ -12,6 +12,7 @@ export type ResultadoAusencia = {
   nomeCompleto: string
   estado: string
   empresa: string
+  identificador: string
   relatoriosAusentes: string
   totalAusencias: number
 }
@@ -20,6 +21,7 @@ export type ResultadoPresenca = {
   nomeCompleto: string
   estado: string
   empresa: string
+  identificador: string
   relatoriosFeitos: string
   totalFeitos: number
 }
@@ -226,6 +228,7 @@ export function calcularAusencias(
       nomeCompleto: aluno.nomeCompleto,
       estado: aluno.estado,
       empresa: aluno.empresa,
+      identificador: aluno.identificador,
       relatoriosAusentes: ausentes.join(', '),
       totalAusencias: ausentes.length,
     }
@@ -245,8 +248,45 @@ export function calcularPresencas(
       nomeCompleto: aluno.nomeCompleto,
       estado: aluno.estado,
       empresa: aluno.empresa,
+      identificador: aluno.identificador,
       relatoriosFeitos: feitos.join(', '),
       totalFeitos: feitos.length,
     }
   })
+}
+
+export type RespostaPergunta = { pergunta: string; resposta: string }
+
+// Ausente do mapa = aluno não enviou esse relatório.
+// Presente com array vazio = aluno enviou, mas o CSV não tem nenhuma coluna de pergunta numerada.
+export function indexarRespostasPorAluno(
+  csvText: string,
+  idColuna: string
+): Map<string, RespostaPergunta[]> {
+  const { data, meta } = Papa.parse<Record<string, string>>(csvText, {
+    header: true,
+    skipEmptyLines: true,
+  })
+
+  const mapa = new Map<string, RespostaPergunta[]>()
+  const idKey = meta.fields?.find((f) => f === idColuna)
+  if (!idKey) return mapa
+
+  const colunasPergunta = (meta.fields ?? []).filter(
+    (f) => f !== idKey && /^\d+\./.test(f.trim())
+  )
+
+  for (const row of data) {
+    const identificador = (row[idKey] ?? '').trim()
+    if (!identificador) continue
+    mapa.set(
+      identificador,
+      colunasPergunta.map((col) => ({
+        pergunta: col.replace(/^\d+\.\s*/, '').trim(),
+        resposta: (row[col] ?? '').trim(),
+      }))
+    )
+  }
+
+  return mapa
 }
