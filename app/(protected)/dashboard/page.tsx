@@ -1,7 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { BarChart3, FileText, Users, TrendingUp } from 'lucide-react'
+import Link from 'next/link'
+import { BarChart3, FileText, Users, TrendingUp, ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { DashboardCharts } from '@/components/DashboardCharts'
 import { montarEvolucao15Dias, inicioDaJanela, type PontoAuditoria } from '@/lib/evolucao-dashboard'
 
@@ -39,7 +41,7 @@ export default async function DashboardPage() {
       .is('deleted_at', null),
     supabase
       .from('auditorias')
-      .select('created_at, resultado_json')
+      .select('id, created_at, resultado_json')
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
@@ -151,11 +153,23 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Visão geral do acompanhamento de relatórios
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Visão geral do acompanhamento de relatórios
+          </p>
+        </div>
+        {ultimaAuditoria && (
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={<Link href={`/auditorias/${ultimaAuditoria.id}`} />}
+          >
+            Ver última auditoria
+            <ArrowRight data-icon="inline-end" />
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
