@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
   field: { flexDirection: 'row', marginBottom: 2 },
   fieldLabel: { width: 90, fontWeight: 'bold', color: '#505050' },
   fieldValue: { flex: 1 },
-  monthHeader: {
+  relatorioHeader: {
     backgroundColor: '#464646',
     color: '#ffffff',
     padding: 6,
@@ -38,7 +38,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 8,
   },
-  reportHeader: { fontSize: 10, fontWeight: 'bold', marginBottom: 4, marginTop: 8 },
   question: { fontSize: 9, fontWeight: 'bold', marginBottom: 2 },
   answer: { fontSize: 9, marginBottom: 6, marginLeft: 8, color: '#3c3c3c' },
   footer: {
@@ -86,10 +85,9 @@ export function RelatorioAlunoPDF({ nome, estado, empresa, meses }: RelatorioAlu
 
         {meses.map((grupo) => (
           <View key={grupo.mes}>
-            <Text style={styles.monthHeader}>{grupo.mes.toUpperCase()}</Text>
             {grupo.relatorios.map((rel) => (
               <View key={rel.nome} wrap={false}>
-                <Text style={styles.reportHeader}>{rel.nome}</Text>
+                <Text style={styles.relatorioHeader}>{rel.nome.toUpperCase()}</Text>
                 {rel.respostas === null ? (
                   <Text style={styles.answer}>Não enviado</Text>
                 ) : rel.respostas.length === 0 ? (
