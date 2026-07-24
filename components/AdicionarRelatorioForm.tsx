@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useRef, useState, useEffect, useTransition } from 'react'
+import { useActionState, useRef, useState, useEffect, useTransition, startTransition } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -90,7 +90,9 @@ export function AdicionarRelatorioForm({ numeroInicial }: Props) {
     for (const arquivo of arquivosOrdenados) {
       formData.append('arquivos', arquivo)
     }
-    action(formData)
+    startTransition(() => {
+      action(formData)
+    })
   }
 
   return (
