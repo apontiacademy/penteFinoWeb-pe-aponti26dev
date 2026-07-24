@@ -95,7 +95,13 @@ function SortIcon({ col, sortCol, sortDir }: { col: SortCol; sortCol: SortCol; s
 }
 
 async function baixarArquivo(url: string, nomeFallback: string) {
-  const res = await fetch(url)
+  let res: Response
+  try {
+    res = await fetch(url)
+  } catch {
+    throw new Error('Falha de conexão ao baixar o arquivo')
+  }
+
   if (!res.ok) {
     let mensagem = 'Falha ao baixar arquivo'
     try {
@@ -113,10 +119,13 @@ async function baixarArquivo(url: string, nomeFallback: string) {
   const link = document.createElement('a')
   link.href = objectUrl
   link.download = nomeArquivo
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  URL.revokeObjectURL(objectUrl)
+  try {
+    document.body.appendChild(link)
+    link.click()
+  } finally {
+    link.remove()
+    URL.revokeObjectURL(objectUrl)
+  }
 }
 
 export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
@@ -131,25 +140,31 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
   )
   const ufsAnchor = useComboboxAnchor()
   const isNF = modo === 'nao_feitos'
-  const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set())
   const [downloadingZip, setDownloadingZip] = useState(false)
 
   async function handleBaixarPdf(row: { identificador?: string; nomeCompleto: string }) {
-    if (!row.identificador) return
-    setDownloadingId(row.identificador)
+    const id = row.identificador
+    if (!id || downloadingIds.has(id)) return
+    setDownloadingIds((prev) => new Set(prev).add(id))
     try {
       await baixarArquivo(
-        `/api/auditorias/${auditId}/pdf-aluno/${encodeURIComponent(row.identificador)}`,
+        `/api/auditorias/${auditId}/pdf-aluno/${encodeURIComponent(id)}`,
         `${row.nomeCompleto}.pdf`
       )
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Falha ao gerar o PDF')
     } finally {
-      setDownloadingId(null)
+      setDownloadingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
     }
   }
 
   async function handleBaixarZip() {
+    if (downloadingZip) return
     setDownloadingZip(true)
     try {
       await baixarArquivo(
@@ -302,7 +317,7 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
 
         <DropdownMenu>
           <DropdownMenuTrigger
-            render={<Button variant="outline" size="sm" className="gap-1.5" disabled={downloadingZip} />}
+            render={<Button variant="outline" size="sm" className="gap-1.5" />}
           >
             {downloadingZip ? <Spinner className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}
             {downloadingZip ? 'Gerando zip...' : 'Baixar'}
@@ -518,12 +533,12 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
                                 variant="ghost"
                                 size="icon-sm"
                                 aria-label={`Gerar PDF de ${row.nomeCompleto}`}
-                                disabled={downloadingId === row.identificador}
+                                disabled={downloadingIds.has(row.identificador)}
                                 onClick={() => handleBaixarPdf(row)}
                               />
                             }
                           >
-                            {downloadingId === row.identificador ? (
+                            {downloadingIds.has(row.identificador) ? (
                               <Spinner className="w-3.5 h-3.5" />
                             ) : (
                               <FileDown className="w-3.5 h-3.5" />
