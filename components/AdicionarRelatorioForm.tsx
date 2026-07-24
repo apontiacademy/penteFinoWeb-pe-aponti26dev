@@ -83,7 +83,9 @@ export function AdicionarRelatorioForm({ numeroInicial }: Props) {
   }
 
   function handleConfirmarPreview(arquivosOrdenados: File[]) {
+    if (pending) return
     setPreviewAberto(false)
+    setArquivosSelecionados(arquivosOrdenados)
     const formData = new FormData()
     for (const arquivo of arquivosOrdenados) {
       formData.append('arquivos', arquivo)
@@ -160,6 +162,7 @@ export function AdicionarRelatorioForm({ numeroInicial }: Props) {
         open={previewAberto}
         arquivos={arquivosSelecionados}
         numeroInicial={numeroInicial}
+        pending={pending}
         onConfirm={handleConfirmarPreview}
         onCancel={() => setPreviewAberto(false)}
       />

@@ -35,6 +35,7 @@ type Props = {
   open: boolean
   arquivos: File[]
   numeroInicial: number
+  pending: boolean
   onConfirm: (arquivosOrdenados: File[]) => void
   onCancel: () => void
 }
@@ -43,6 +44,7 @@ export function RelatorioUploadPreviewModal({
   open,
   arquivos,
   numeroInicial,
+  pending,
   onConfirm,
   onCancel,
 }: Props) {
@@ -115,7 +117,10 @@ export function RelatorioUploadPreviewModal({
           <Button variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
-          <Button onClick={() => onConfirm(staged.map((a) => a.file))} disabled={staged.length === 0}>
+          <Button
+            onClick={() => onConfirm(staged.map((a) => a.file))}
+            disabled={staged.length === 0 || pending}
+          >
             Confirmar e anexar ({staged.length})
           </Button>
         </DialogFooter>
