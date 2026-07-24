@@ -45,12 +45,21 @@ import {
   ArrowUp,
   ArrowDown,
   X,
+  FileDown,
+  ChevronDown,
 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 type NaoFeito = {
   nomeCompleto: string
   estado: string
   empresa: string
+  identificador?: string
   relatoriosAusentes: string
   totalAusencias: number
 }
@@ -59,6 +68,7 @@ type Feito = {
   nomeCompleto: string
   estado: string
   empresa: string
+  identificador?: string
   relatoriosFeitos: string
   totalFeitos: number
 }
@@ -230,12 +240,29 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
           </TabsList>
         </Tabs>
 
-        <a href={`/api/auditorias/${auditId}/download?modo=${modo}`} download>
-          <Button variant="outline" size="sm" className="gap-1.5">
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={<Button variant="outline" size="sm" className="gap-1.5" />}
+          >
             <Download className="w-3.5 h-3.5" />
-            Baixar CSV
-          </Button>
-        </a>
+            Baixar
+            <ChevronDown className="w-3.5 h-3.5" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              render={<a href={`/api/auditorias/${auditId}/download?modo=${modo}`} download />}
+              className="cursor-pointer"
+            >
+              Baixar CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              render={<a href={`/api/auditorias/${auditId}/pdf-todos`} download />}
+              className="cursor-pointer"
+            >
+              Baixar todos os PDFs (.zip)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Filter bar */}
@@ -346,12 +373,13 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
                   <SortIcon col="total" sortCol={sortCol} sortDir={sortDir} />
                 </button>
               </TableHead>
+              <TableHead className="py-3 w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {dados.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
                   Nenhum resultado para os filtros aplicados.
                 </TableCell>
               </TableRow>
@@ -420,6 +448,19 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
                         >
                           {count}
                         </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-3 text-right">
+                      {row.identificador && (
+                        <a href={`/api/auditorias/${auditId}/pdf-aluno/${row.identificador}`} download>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Gerar PDF de ${row.nomeCompleto}`}
+                          >
+                            <FileDown className="w-3.5 h-3.5" />
+                          </Button>
+                        </a>
                       )}
                     </TableCell>
                   </TableRow>

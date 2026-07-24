@@ -13,6 +13,7 @@ type Resultado = {
     nomeCompleto: string
     estado: string
     empresa: string
+    identificador?: string
     relatoriosAusentes: string
     totalAusencias: number
   }[]
@@ -20,6 +21,7 @@ type Resultado = {
     nomeCompleto: string
     estado: string
     empresa: string
+    identificador?: string
     relatoriosFeitos: string
     totalFeitos: number
   }[]
