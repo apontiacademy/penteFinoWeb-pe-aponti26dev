@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useRef, useState, useEffect, useTransition } from 'react'
+import { useActionState, useRef, useState, useEffect, useTransition, startTransition } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,11 +17,17 @@ import {
 } from '@/components/ui/alert-dialog'
 import { UploadCloud, FileCheck2, Loader2 } from 'lucide-react'
 import { adicionarRelatorios, gerarAuditoriaManual } from '@/app/(protected)/relatorios/actions'
+import { RelatorioUploadPreviewModal } from '@/components/RelatorioUploadPreviewModal'
 
-export function AdicionarRelatorioForm() {
+type Props = {
+  numeroInicial: number
+}
+
+export function AdicionarRelatorioForm({ numeroInicial }: Props) {
   const [state, action, pending] = useActionState(adicionarRelatorios, null)
   const formRef = useRef<HTMLFormElement>(null)
-  const [fileNames, setFileNames] = useState<string[]>([])
+  const [arquivosSelecionados, setArquivosSelecionados] = useState<File[]>([])
+  const [previewAberto, setPreviewAberto] = useState(false)
   const [showGerarDialog, setShowGerarDialog] = useState(false)
   const [gerando, startGerarTransition] = useTransition()
 
@@ -39,7 +45,8 @@ export function AdicionarRelatorioForm() {
 
     if (state.sucesso && state.sucesso.length > 0) {
       formRef.current?.reset()
-      setFileNames([])
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reagindo ao novo resultado de useActionState (sistema externo), nao a uma derivacao em tempo de render
+      setArquivosSelecionados([])
       toast.success(
         state.sucesso.length === 1
           ? 'Relatório anexado com sucesso!'
@@ -64,10 +71,28 @@ export function AdicionarRelatorioForm() {
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    if (fileNames.length === 0) {
+    if (arquivosSelecionados.length === 0) {
       e.preventDefault()
       toast.error('Selecione ao menos um arquivo CSV.')
+      return
     }
+    if (arquivosSelecionados.length >= 2) {
+      e.preventDefault()
+      setPreviewAberto(true)
+    }
+  }
+
+  function handleConfirmarPreview(arquivosOrdenados: File[]) {
+    if (pending) return
+    setPreviewAberto(false)
+    setArquivosSelecionados(arquivosOrdenados)
+    const formData = new FormData()
+    for (const arquivo of arquivosOrdenados) {
+      formData.append('arquivos', arquivo)
+    }
+    startTransition(() => {
+      action(formData)
+    })
   }
 
   return (
@@ -79,21 +104,23 @@ export function AdicionarRelatorioForm() {
             htmlFor="arquivo-rel"
             className={`flex flex-col items-center justify-center w-full rounded-xl border-2 border-dashed cursor-pointer transition-all py-8 px-4 text-center
               ${pending ? 'opacity-50 cursor-not-allowed' : ''}
-              ${fileNames.length > 0
+              ${arquivosSelecionados.length > 0
                 ? 'border-primary/50 bg-primary/5'
                 : 'border-border hover:border-primary/40 hover:bg-primary/3'
               }`}
           >
-            {fileNames.length > 0 ? (
+            {arquivosSelecionados.length > 0 ? (
               <>
                 <FileCheck2 className="w-7 h-7 text-primary mb-2" />
                 <span className="text-sm font-medium text-primary truncate max-w-full px-4">
-                  {fileNames.length === 1
-                    ? fileNames[0]
-                    : `${fileNames.length} arquivos selecionados`}
+                  {arquivosSelecionados.length === 1
+                    ? arquivosSelecionados[0].name
+                    : `${arquivosSelecionados.length} arquivos selecionados`}
                 </span>
                 <span className="text-xs text-muted-foreground mt-1 truncate max-w-full px-4">
-                  {fileNames.length === 1 ? 'Clique para trocar o arquivo' : fileNames.join(', ')}
+                  {arquivosSelecionados.length === 1
+                    ? 'Clique para trocar o arquivo'
+                    : arquivosSelecionados.map((f) => f.name).join(', ')}
                 </span>
               </>
             ) : (
@@ -114,7 +141,7 @@ export function AdicionarRelatorioForm() {
             multiple
             disabled={pending}
             className="sr-only"
-            onChange={(e) => setFileNames(Array.from(e.target.files ?? []).map((f) => f.name))}
+            onChange={(e) => setArquivosSelecionados(Array.from(e.target.files ?? []))}
           />
         </div>
 
@@ -132,6 +159,15 @@ export function AdicionarRelatorioForm() {
           )}
         </Button>
       </form>
+
+      <RelatorioUploadPreviewModal
+        open={previewAberto}
+        arquivos={arquivosSelecionados}
+        numeroInicial={numeroInicial}
+        pending={pending}
+        onConfirm={handleConfirmarPreview}
+        onCancel={() => setPreviewAberto(false)}
+      />
 
       <AlertDialog
         open={showGerarDialog}
