@@ -456,6 +456,7 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
                     <TableCell className="py-3 text-right">
                       {row.identificador && (
                         <Button
+                          nativeButton={false}
                           render={
                             <a
                               href={`/api/auditorias/${auditId}/pdf-aluno/${encodeURIComponent(row.identificador)}`}
