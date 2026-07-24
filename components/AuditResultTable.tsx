@@ -452,15 +452,19 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
                     </TableCell>
                     <TableCell className="py-3 text-right">
                       {row.identificador && (
-                        <a href={`/api/auditorias/${auditId}/pdf-aluno/${row.identificador}`} download>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label={`Gerar PDF de ${row.nomeCompleto}`}
-                          >
-                            <FileDown className="w-3.5 h-3.5" />
-                          </Button>
-                        </a>
+                        <Button
+                          render={
+                            <a
+                              href={`/api/auditorias/${auditId}/pdf-aluno/${encodeURIComponent(row.identificador)}`}
+                              download
+                            />
+                          }
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Gerar PDF de ${row.nomeCompleto}`}
+                        >
+                          <FileDown className="w-3.5 h-3.5" />
+                        </Button>
                       )}
                     </TableCell>
                   </TableRow>
