@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { ChevronRight, ClipboardList } from 'lucide-react'
 import { TRIGGER_INFO } from '@/lib/trigger-info'
+import { LinkPendingIndicator } from '@/components/LinkPendingIndicator'
 import {
   Pagination,
   PaginationContent,
@@ -45,7 +46,8 @@ export function AuditoriasList({
         <p className="text-muted-foreground text-xs mt-1">
           Adicione relatórios em{' '}
           <Link href="/relatorios" className="text-primary underline-offset-2 hover:underline">
-            Relatórios
+            Relatórios{' '}
+            <LinkPendingIndicator />
           </Link>{' '}
           para gerar a primeira auditoria.
         </p>
@@ -91,6 +93,7 @@ export function AuditoriasList({
                     {info.label}
                   </Badge>
                   <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0" />
+                  <LinkPendingIndicator />
                 </div>
               </Link>
             </li>

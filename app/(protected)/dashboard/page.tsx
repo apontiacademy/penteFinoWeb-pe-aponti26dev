@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { DashboardCharts } from '@/components/DashboardCharts'
 import { montarEvolucao15Dias, inicioDaJanela, type PontoAuditoria } from '@/lib/evolucao-dashboard'
+import { LinkPendingIndicator } from '@/components/LinkPendingIndicator'
 
 type NaoFeito = {
   nomeCompleto: string
@@ -168,6 +169,7 @@ export default async function DashboardPage() {
           >
             Ver última auditoria
             <ArrowRight data-icon="inline-end" />
+            <LinkPendingIndicator />
           </Button>
         )}
       </div>

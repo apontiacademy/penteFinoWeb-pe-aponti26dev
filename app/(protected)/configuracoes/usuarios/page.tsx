@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft, Users } from 'lucide-react'
 import { CriarUsuarioDialog } from '@/components/CriarUsuarioDialog'
 import { UsuariosList } from '@/components/UsuariosList'
+import { LinkPendingIndicator } from '@/components/LinkPendingIndicator'
 
 export default async function UsuariosPage() {
   const supabase = await createClient()
@@ -36,6 +37,7 @@ export default async function UsuariosPage() {
         <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground -ml-2 h-8">
           <ArrowLeft className="w-3.5 h-3.5" />
           Configurações
+          <LinkPendingIndicator />
         </Button>
       </Link>
 

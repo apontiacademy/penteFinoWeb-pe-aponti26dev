@@ -5,6 +5,7 @@ import { NavLinks } from '@/components/NavLinks'
 import { UserMenu } from '@/components/UserMenu'
 import { Logomark } from '@/components/Logomark'
 import { ScrollToTopButton } from '@/components/ScrollToTopButton'
+import { LinkPendingIndicator } from '@/components/LinkPendingIndicator'
 
 export default async function ProtectedLayout({
   children,
@@ -35,6 +36,7 @@ export default async function ProtectedLayout({
               <span className="text-muted-foreground text-sm font-normal hidden sm:inline">
                 pente fino
               </span>
+              <LinkPendingIndicator />
             </Link>
 
             <nav className="flex items-center gap-0.5">
