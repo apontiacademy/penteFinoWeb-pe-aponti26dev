@@ -141,6 +141,8 @@ Hoje cada `<li>` tem exatamente dois filhos flex diretos (`justify-between`): a 
 
 O `ml-2` que hoje está no botão de excluir (`shrink-0 ml-2`) sai dele — o `gap-1` do novo wrapper cuida do espaçamento entre os dois botões, e o `shrink-0` do wrapper substitui o do botão individual, mantendo os dois do encolher quando a linha aperta.
 
+**Adição pós-plano (pedido do usuário durante a implementação):** os dois botões (baixar e excluir) ganharam tooltip ao passar o mouse, usando `Tooltip`/`TooltipTrigger`/`TooltipContent` de `@/components/ui/tooltip` — mesmo componente já usado em `components/AuditResultTable.tsx` para o botão de baixar PDF, com `TooltipProvider` já montado globalmente em `app/layout.tsx`. Para o botão de baixar: `<Tooltip><TooltipTrigger render={<Button .../>}>{ícone}</TooltipTrigger><TooltipContent>Baixar relatório</TooltipContent></Tooltip>`, seguindo o mesmo padrão já existente. Para o botão de excluir (que já é um `AlertDialogTrigger`), o `TooltipTrigger` envolve o `AlertDialogTrigger` (`render={<AlertDialogTrigger render={<Button .../>} />}`) — dois níveis de `render` aninhados, sem precedente exato neste projeto até então, mas é o mesmo mecanismo de composição por clonagem que o Base UI já usa em todo canto (`render` prop). `aria-label` (`"Baixar {nome}"` / `"Excluir {nome}"`) adicionado em ambos os botões para leitores de tela, já que o texto do tooltip sozinho não é garantidamente acessível.
+
 ## Fluxo de dados (resumo)
 
 ```
