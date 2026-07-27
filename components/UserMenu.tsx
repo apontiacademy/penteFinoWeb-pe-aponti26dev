@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import { LinkPendingIndicator } from '@/components/LinkPendingIndicator'
 
 type Props = {
   name: string
@@ -67,6 +68,7 @@ export function UserMenu({ name, email, isAdmin }: Props) {
           >
             <User className="w-4 h-4" />
             Minha conta
+            <LinkPendingIndicator />
           </DropdownMenuItem>
 
           {isAdmin && (
@@ -76,6 +78,7 @@ export function UserMenu({ name, email, isAdmin }: Props) {
             >
               <Settings className="w-4 h-4" />
               Configurações
+              <LinkPendingIndicator />
             </DropdownMenuItem>
           )}
 
