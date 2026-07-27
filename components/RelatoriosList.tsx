@@ -15,7 +15,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { FileText, Trash2, InboxIcon } from 'lucide-react'
+import { Spinner } from '@/components/ui/spinner'
+import { FileText, Trash2, InboxIcon, Download } from 'lucide-react'
 import { deletarRelatorios, gerarAuditoriaManual } from '@/app/(protected)/relatorios/actions'
 
 type Relatorio = {
@@ -31,6 +32,7 @@ export function RelatoriosList({ relatorios }: { relatorios: Relatorio[] }) {
   const [gerando, setGerando] = useState(false)
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false)
   const [openRowId, setOpenRowId] = useState<string | null>(null)
+  const [baixandoId, setBaixandoId] = useState<string | null>(null)
 
   // Reconcilia contra `relatorios` durante o render (sem efeito) para que IDs
   // que deixaram de existir na prop (ex.: excluídos em outra sessão) nunca
@@ -83,6 +85,29 @@ export function RelatoriosList({ relatorios }: { relatorios: Relatorio[] }) {
       setExcluindo(false)
       setBulkDialogOpen(false)
       setOpenRowId(null)
+    }
+  }
+
+  async function baixar(id: string, nome: string) {
+    setBaixandoId(id)
+    try {
+      const res = await fetch(`/api/relatorios/${id}/download`)
+      if (!res.ok) {
+        const body = await res.json().catch(() => null)
+        toast.error(body?.error ?? 'Não foi possível baixar o relatório.')
+        return
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${nome}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error('Não foi possível baixar o relatório.')
+    } finally {
+      setBaixandoId(null)
     }
   }
 
@@ -198,39 +223,55 @@ export function RelatoriosList({ relatorios }: { relatorios: Relatorio[] }) {
               </div>
             </div>
 
-            <AlertDialog
-              open={openRowId === r.id}
-              onOpenChange={(open) => setOpenRowId(open ? r.id : null)}
-            >
-              <AlertDialogTrigger render={
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 shrink-0 ml-2"
-                />
-              }>
-                <Trash2 className="w-3.5 h-3.5" />
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Isso vai remover <strong>{r.nome}</strong>. Esta ação não pode ser
-                    desfeita.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => excluir([r.id])}
-                    disabled={excluindo}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    {excluindo ? 'Excluindo...' : 'Confirmar exclusão'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <div className="flex items-center gap-1 shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8 p-0"
+                disabled={baixandoId === r.id}
+                onClick={() => baixar(r.id, r.nome)}
+              >
+                {baixandoId === r.id ? (
+                  <Spinner className="size-3.5" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
+              </Button>
+
+              <AlertDialog
+                open={openRowId === r.id}
+                onOpenChange={(open) => setOpenRowId(open ? r.id : null)}
+              >
+                <AlertDialogTrigger render={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+                  />
+                }>
+                  <Trash2 className="w-3.5 h-3.5" />
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Isso vai remover <strong>{r.nome}</strong>. Esta ação não pode ser
+                      desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => excluir([r.id])}
+                      disabled={excluindo}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {excluindo ? 'Excluindo...' : 'Confirmar exclusão'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </li>
         ))}
       </ul>
