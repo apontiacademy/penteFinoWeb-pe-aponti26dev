@@ -122,7 +122,7 @@ export default function LoginPage() {
                   href="/esqueci-senha"
                   className="text-sm text-muted-foreground hover:text-foreground"
                 >
-                  Esqueci minha senha
+                  Esqueci minha senha{' '}
                   <LinkPendingIndicator />
                 </Link>
               </div>

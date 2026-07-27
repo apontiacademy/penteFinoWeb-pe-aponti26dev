@@ -46,7 +46,7 @@ export function AuditoriasList({
         <p className="text-muted-foreground text-xs mt-1">
           Adicione relatórios em{' '}
           <Link href="/relatorios" className="text-primary underline-offset-2 hover:underline">
-            Relatórios
+            Relatórios{' '}
             <LinkPendingIndicator />
           </Link>{' '}
           para gerar a primeira auditoria.

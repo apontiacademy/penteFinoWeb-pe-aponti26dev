@@ -12,7 +12,7 @@ export function LinkPendingIndicator() {
       <Spinner
         aria-hidden="true"
         role={undefined}
-        className={cn('size-3.5 ml-1.5 transition-opacity', pending ? 'opacity-100' : 'opacity-0')}
+        className={cn('size-3.5 transition-opacity', pending ? 'opacity-100' : 'opacity-0')}
       />
       <span role="status" className="sr-only">
         {pending ? 'Carregando página…' : ''}
