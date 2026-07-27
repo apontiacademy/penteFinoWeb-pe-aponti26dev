@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Spinner } from '@/components/ui/spinner'
 import { FileText, Trash2, InboxIcon, Download } from 'lucide-react'
 import { deletarRelatorios, gerarAuditoriaManual } from '@/app/(protected)/relatorios/actions'
@@ -224,33 +225,45 @@ export function RelatoriosList({ relatorios }: { relatorios: Relatorio[] }) {
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8 p-0"
-                disabled={baixandoId === r.id}
-                onClick={() => baixar(r.id, r.nome)}
-              >
-                {baixandoId === r.id ? (
-                  <Spinner className="size-3.5" />
-                ) : (
-                  <Download className="w-3.5 h-3.5" />
-                )}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger render={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-label={`Baixar ${r.nome}`}
+                    className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8 p-0"
+                    disabled={baixandoId === r.id}
+                    onClick={() => baixar(r.id, r.nome)}
+                  />
+                }>
+                  {baixandoId === r.id ? (
+                    <Spinner className="size-3.5" />
+                  ) : (
+                    <Download className="w-3.5 h-3.5" />
+                  )}
+                </TooltipTrigger>
+                <TooltipContent>Baixar relatório</TooltipContent>
+              </Tooltip>
 
               <AlertDialog
                 open={openRowId === r.id}
                 onOpenChange={(open) => setOpenRowId(open ? r.id : null)}
               >
-                <AlertDialogTrigger render={
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
-                  />
-                }>
-                  <Trash2 className="w-3.5 h-3.5" />
-                </AlertDialogTrigger>
+                <Tooltip>
+                  <TooltipTrigger render={
+                    <AlertDialogTrigger render={
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label={`Excluir ${r.nome}`}
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+                      />
+                    } />
+                  }>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </TooltipTrigger>
+                  <TooltipContent>Excluir relatório</TooltipContent>
+                </Tooltip>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
