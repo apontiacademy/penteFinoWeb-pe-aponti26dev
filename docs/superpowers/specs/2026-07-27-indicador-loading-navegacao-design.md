@@ -21,20 +21,17 @@ Client component (`'use client'`) novo, sem props, sem estado próprio — toda 
 
 import { useLinkStatus } from 'next/link'
 import { Spinner } from '@/components/ui/spinner'
-import { cn } from '@/lib/utils'
 
 export function LinkPendingIndicator() {
   const { pending } = useLinkStatus()
 
+  if (!pending) return null
+
   return (
     <span className="inline-flex">
-      <Spinner
-        aria-hidden="true"
-        role={undefined}
-        className={cn('size-3.5 ml-1.5 transition-opacity', pending ? 'opacity-100' : 'opacity-0')}
-      />
+      <Spinner aria-hidden="true" role={undefined} className="size-3.5" />
       <span role="status" className="sr-only">
-        {pending ? 'Carregando página…' : ''}
+        Carregando página…
       </span>
     </span>
   )
@@ -45,8 +42,8 @@ Decisões de implementação:
 
 - Reaproveita `Spinner` (`components/ui/spinner.tsx`, já usado em botões de formulário do app) para manter consistência visual — `Loader2Icon` com `animate-spin`.
 - O `Spinner` por padrão renderiza `role="status" aria-label="Loading"`. Como esses atributos vêm antes do spread de `props` no componente `Spinner`, passar `role={undefined}` os sobrescreve; combinado com `aria-hidden="true"`, o ícone fica puramente decorativo e invisível para leitores de tela (evita duplicar/conflitar com o anúncio feito pelo `<span role="status">` abaixo, que é quem carrega o texto acessível).
-- O ícone é **sempre renderizado**, alternando `opacity-0`/`opacity-100` (em vez de montar/desmontar condicionalmente) — mesmo padrão já usado no `ScrollToTopButton`, evita layout shift e permite transição suave via `transition-opacity`.
-- O texto acessível (`sr-only`, dentro de `role="status"`) alterna entre string vazia e `"Carregando página…"` — a troca do conteúdo de texto dentro de uma região `role="status"` (que tem `aria-live="polite"` implícito) é o que dispara o anúncio em leitores de tela; um simples toggle de opacidade no ícone (sem mudança de texto) não seria suficiente para reativar o anúncio a cada navegação.
+- **Revisão pós-implementação:** a primeira versão mantinha o ícone sempre montado, alternando `opacity-0`/`opacity-100` (mesmo padrão do `ScrollToTopButton`), reservando o espaço no layout o tempo todo para evitar layout shift. Na prática, isso deixava um espaço vazio visível ao lado de cada botão/link quando não havia navegação pendente (feedback do usuário testando a feature). Trocado para desmontar completamente o componente (`return null`) quando `pending` é `false` — o indicador não ocupa espaço nenhum em repouso, e só empurra o layout no instante em que a navegação realmente está pendente. O pequeno deslocamento visual nesse momento é preferível ao espaço vazio permanente.
+- O texto acessível (`sr-only`, dentro de `role="status"`) só existe no DOM enquanto `pending` é `true` — a própria montagem do nó com texto dentro de uma região `role="status"` (que tem `aria-live="polite"` implícito) já é suficiente para leitores de tela modernos anunciarem "Carregando página…" ao aparecer.
 - `size-3.5` (14px) para combinar com o tamanho de ícone já usado em textos `text-sm` no app (ex. ícones do `NavLinks`, `w-3.5 h-3.5`).
 - Sem delay artificial antes de exibir (a documentação do Next sugere isso para evitar "flash" em navegações rápidas) — mantido simples de propósito. Como nenhuma rota do app tem `loading.js` hoje, navegações para páginas dinâmicas (todas fazem chamadas ao Supabase no servidor) tendem a ser lentas o suficiente para o spinner aparecer de forma útil na maioria dos casos reais.
 
@@ -70,7 +67,7 @@ O componente é inserido como filho de cada `<Link>` client-side do app (levanta
 
 Para os `<Link>` que envolvem um `<Button>` (ex. breadcrumbs, cards de `configuracoes`, "Ver última auditoria" via `render={<Link .../>}`), o indicador entra como filho do `Button`/dentro do conteúdo já existente — como o `@base-ui/react` mescla os filhos do componente com o elemento de `render`, o indicador continua sendo descendente do `<Link>` real no DOM final, o que é o único requisito do hook.
 
-Nos botões de paginação de `configuracoes/logs/page.tsx` (ícone só, sem texto), o `ml-1.5` do indicador fica levemente deslocado ao lado do ícone — aceito como trade-off cosmético menor, não bloqueante.
+Como o indicador não é renderizado em repouso (ver revisão pós-implementação acima), o espaçamento entre ele e o conteúdo do link/botão vem inteiramente do `gap-*` do container flex existente (`Button` já usa `gap-*` nas suas variantes de tamanho) — nenhuma margem própria é necessária no componente.
 
 ## Fluxo de dados (resumo)
 
@@ -81,8 +78,7 @@ usuário clica em um <Link>
 useLinkStatus() (Next.js) → pending = true
         │
         ▼
-LinkPendingIndicator: ícone some de opacity-0 → opacity-100
-                      texto sr-only muda para "Carregando página…"
+LinkPendingIndicator monta: ícone (aria-hidden) + texto sr-only "Carregando página…"
         │
         ▼
 navegação conclui (history atualizado)
@@ -91,7 +87,7 @@ navegação conclui (history atualizado)
 useLinkStatus() → pending = false
         │
         ▼
-ícone volta a opacity-0, texto sr-only volta a vazio
+LinkPendingIndicator desmonta (retorna null) — nenhum espaço reservado em repouso
 ```
 
 ## Tratamento de erros / casos de borda

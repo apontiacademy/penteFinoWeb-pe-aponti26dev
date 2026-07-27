@@ -2,20 +2,17 @@
 
 import { useLinkStatus } from 'next/link'
 import { Spinner } from '@/components/ui/spinner'
-import { cn } from '@/lib/utils'
 
 export function LinkPendingIndicator() {
   const { pending } = useLinkStatus()
 
+  if (!pending) return null
+
   return (
     <span className="inline-flex">
-      <Spinner
-        aria-hidden="true"
-        role={undefined}
-        className={cn('size-3.5 transition-opacity', pending ? 'opacity-100' : 'opacity-0')}
-      />
+      <Spinner aria-hidden="true" role={undefined} className="size-3.5" />
       <span role="status" className="sr-only">
-        {pending ? 'Carregando página…' : ''}
+        Carregando página…
       </span>
     </span>
   )
