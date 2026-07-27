@@ -46,7 +46,7 @@ export default async function AuditoriaDetailPage({
 
   const { data: relatorios } = await supabase
     .from('relatorios')
-    .select('id, nome, semana')
+    .select('id, nome')
     .in('id', auditoria.relatorios_incluidos ?? [])
 
   const resultado = auditoria.resultado_json as Resultado | null
