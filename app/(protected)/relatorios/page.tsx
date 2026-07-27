@@ -23,7 +23,7 @@ export default async function RelatoriosPage() {
 
   const { data: relatorios } = await supabase
     .from('relatorios')
-    .select('id, nome, semana, created_at')
+    .select('id, nome, created_at')
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
 

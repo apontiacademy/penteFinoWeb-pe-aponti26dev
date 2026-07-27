@@ -8,7 +8,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 type Relatorio = {
   id: string
   nome: string
-  semana: string
 }
 
 type Props = {
@@ -40,8 +39,6 @@ export function RelatoriosIncluidosCard({ relatorios }: Props) {
               >
                 <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
                 <span className="text-sm font-medium text-foreground">{r.nome}</span>
-                <span className="w-px h-3 bg-border" />
-                <span className="text-xs text-muted-foreground">{r.semana}</span>
               </div>
             ))}
           </CardContent>

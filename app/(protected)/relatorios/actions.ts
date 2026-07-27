@@ -76,7 +76,6 @@ export async function adicionarRelatorios(
 
     for (const arquivo of arquivos) {
       const nome = `Relatório ${proximoNumero}`
-      const semana = `Semana ${proximoNumero}`
 
       try {
         const texto = await arquivo.text()
@@ -103,7 +102,6 @@ export async function adicionarRelatorios(
         const { error: insertError } = await supabase.from('relatorios').insert({
           id: relatorioId,
           nome,
-          semana,
           storage_path: storagePath,
           user_id: user.id,
         })
@@ -118,7 +116,7 @@ export async function adicionarRelatorios(
           userEmail: user.email!,
           action: 'relatorio.adicionar',
           target: relatorioId,
-          details: { nome, semana },
+          details: { nome },
         })
 
         sucesso.push({ id: relatorioId, nome })
