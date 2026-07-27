@@ -14,7 +14,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { FileText, Trash2, InboxIcon } from 'lucide-react'
 import { deletarRelatorios, gerarAuditoriaManual } from '@/app/(protected)/relatorios/actions'
@@ -22,7 +21,6 @@ import { deletarRelatorios, gerarAuditoriaManual } from '@/app/(protected)/relat
 type Relatorio = {
   id: string
   nome: string
-  semana: string
   created_at: string
 }
 
@@ -185,10 +183,7 @@ export function RelatoriosList({ relatorios }: { relatorios: Relatorio[] }) {
               </div>
               <div className="min-w-0">
                 <p className="font-medium text-sm truncate">{r.nome}</p>
-                <div className="flex gap-2 mt-1 items-center">
-                  <Badge variant="secondary" className="text-xs px-2 py-0">
-                    {r.semana}
-                  </Badge>
+                <div className="mt-1">
                   <span className="text-xs text-muted-foreground">
                     {new Date(r.created_at).toLocaleString('pt-BR', {
                       timeZone: 'America/Sao_Paulo',
