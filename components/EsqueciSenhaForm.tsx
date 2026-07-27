@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AlertCircle, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react'
+import { LinkPendingIndicator } from '@/components/LinkPendingIndicator'
 
 export function EsqueciSenhaForm({ linkInvalido }: { linkInvalido: boolean }) {
   const [email, setEmail] = useState('')
@@ -89,6 +90,7 @@ export function EsqueciSenhaForm({ linkInvalido }: { linkInvalido: boolean }) {
       >
         <ArrowLeft className="w-3.5 h-3.5" />
         Voltar para o login
+        <LinkPendingIndicator />
       </Link>
     </div>
   )

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { BarChart3, FileText, LayoutDashboard } from 'lucide-react'
+import { LinkPendingIndicator } from '@/components/LinkPendingIndicator'
 
 const allLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -30,6 +31,7 @@ export function NavLinks({ isAdmin }: { isAdmin: boolean }) {
           >
             <Icon className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">{label}</span>
+            <LinkPendingIndicator />
           </Link>
         )
       })}

@@ -8,6 +8,7 @@ import { AuditResultTable } from '@/components/AuditResultTable'
 import { RelatoriosIncluidosCard } from '@/components/RelatoriosIncluidosCard'
 import { ArrowLeft, Calendar, FileText } from 'lucide-react'
 import { TRIGGER_INFO } from '@/lib/trigger-info'
+import { LinkPendingIndicator } from '@/components/LinkPendingIndicator'
 
 type Resultado = {
   nao_feitos: {
@@ -60,6 +61,7 @@ export default async function AuditoriaDetailPage({
         <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground -ml-2 h-8">
           <ArrowLeft className="w-3.5 h-3.5" />
           Auditorias
+          <LinkPendingIndicator />
         </Button>
       </Link>
 

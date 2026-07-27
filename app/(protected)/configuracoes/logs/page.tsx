@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ScrollText, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ACTION_LABELS, type SystemLogAction } from '@/lib/system-log'
+import { LinkPendingIndicator } from '@/components/LinkPendingIndicator'
 
 const PER_PAGE = 30
 
@@ -71,6 +72,7 @@ export default async function LogsPage({
         <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground -ml-2 h-8">
           <ArrowLeft className="w-3.5 h-3.5" />
           Configurações
+          <LinkPendingIndicator />
         </Button>
       </Link>
 
@@ -149,6 +151,7 @@ export default async function LogsPage({
                   <Link href={`/configuracoes/logs?page=${safePage - 1}`}>
                     <Button variant="outline" size="icon" className="h-7 w-7">
                       <ChevronLeft className="w-3.5 h-3.5" />
+                      <LinkPendingIndicator />
                     </Button>
                   </Link>
                 )}
@@ -160,6 +163,7 @@ export default async function LogsPage({
                   <Link href={`/configuracoes/logs?page=${safePage + 1}`}>
                     <Button variant="outline" size="icon" className="h-7 w-7">
                       <ChevronRight className="w-3.5 h-3.5" />
+                      <LinkPendingIndicator />
                     </Button>
                   </Link>
                 )}

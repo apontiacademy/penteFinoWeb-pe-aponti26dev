@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { PlanilhaGeralForm } from '@/components/PlanilhaGeralForm'
 import { Settings, Clock, Users, ChevronRight, ScrollText } from 'lucide-react'
+import { LinkPendingIndicator } from '@/components/LinkPendingIndicator'
 
 export default async function ConfiguracoesPage() {
   const supabase = await createClient()
@@ -106,6 +107,7 @@ export default async function ConfiguracoesPage() {
               <Users className="w-4 h-4" />
               Gerenciar usuários
               <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+              <LinkPendingIndicator />
             </Button>
           </Link>
         </CardContent>
@@ -124,6 +126,7 @@ export default async function ConfiguracoesPage() {
               <ScrollText className="w-4 h-4" />
               Ver logs
               <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+              <LinkPendingIndicator />
             </Button>
           </Link>
         </CardContent>
