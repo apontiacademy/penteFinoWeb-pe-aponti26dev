@@ -18,7 +18,16 @@ Full design: `docs/superpowers/specs/2026-07-27-unificar-numeracao-relatorios-de
 
 Earlier work on this codebase (see `docs/superpowers/plans/2026-07-14-identificador-unico-cruzamento.md`) applied a migration via `mcp__claude_ai_Supabase__apply_migration` and related MCP tools. **Those tools are not connected in this session** (verified via `ToolSearch` — no `mcp__claude_ai_Supabase__*` tools resolve), and the Supabase CLI is not installed locally either (`supabase --version` → command not found). Do not assume either becomes available mid-plan without re-checking.
 
-Because of this — and because `DROP COLUMN` on a shared production database is a hard-to-reverse action — **no task in this plan applies the migration to the live database**. Task 4 only writes the SQL file locally. Applying it is called out as an explicit manual step at the end of this plan (see "Applying the migration" section), to be done by the human directly (Supabase dashboard SQL editor) or by the controller only after re-confirming a migration tool is available AND getting the user's explicit go-ahead at that moment — not as an automatic consequence of "the plan says to."
+Because of this — and because schema changes on a shared production database are hard-to-reverse — **no task in this plan applies any migration to the live database**. Tasks 4a and 4b (below) only write SQL files locally. Applying them is called out as an explicit manual step at the end of this plan (see "Applying the migrations" section), to be done by the human directly (Supabase dashboard SQL editor) or by the controller only after re-confirming a migration tool is available AND getting the user's explicit go-ahead at that moment — not as an automatic consequence of "the plan says to."
+
+## Critical deployment-ordering issue (found during Task 1 code review, fixed in this plan)
+
+`relatorios.semana` is `NOT NULL` in the live database today, with no default. Task 1 makes the Server Action stop supplying `semana` on insert. **Deployed by itself, with no DB change, this breaks every report upload** (`insert` violates the `NOT NULL` constraint) until a human relaxes or drops the constraint. Conversely, dropping the column before the code stops referencing it would break selects/inserts the other way. Neither ordering is safe on its own — this needs the standard **expand/contract** two-migration pattern:
+
+- **Expand (Task 4a, do this first, independent of code deploy):** `alter table relatorios alter column semana drop not null;` — safe in any order relative to the code deploy, reversible, low-risk. This must be applied (manually, per the tooling caveat above) **before or immediately as** Task 1's code ships, not "whenever convenient" — otherwise production report uploads break in the gap.
+- **Contract (Task 4b, only after Task 1-3's code is confirmed live):** `alter table relatorios drop column semana;` — the original Task 4, unchanged, still deliberately manual and deferred.
+
+See "Applying the migrations" at the end of this plan for the full ordering.
 
 ---
 
@@ -362,18 +371,48 @@ git commit -m "feat: remover semana do card de relatorios incluidos na auditoria
 
 ---
 
-### Task 4: Write the database migration file (local file only — do not apply)
+### Task 4a: Write the "expand" migration file (relax NOT NULL — local file only, do not apply)
 
 **Files:**
-- Create: `supabase/migrations/<timestamp>_drop_semana_from_relatorios.sql`
+- Create: `supabase/migrations/<timestamp_a>_relax_semana_not_null_in_relatorios.sql`
+
+This migration must exist and — per the "Applying the migrations" section — be applied to the live database before or immediately as Task 1's code ships, to avoid breaking report uploads. See "Critical deployment-ordering issue" above for why.
 
 - [ ] **Step 1: Determine the timestamp prefix**
 
-Supabase migration filenames use a `YYYYMMDDHHMMSS` prefix. Look at the most recent file in `supabase/migrations/` (currently `20260722163959_add_revoke_user_sessions_function.sql`) and pick a new timestamp later than that one, matching today's date at the time this task is executed (format: `YYYYMMDDHHMMSS`, e.g. `20260727143000`).
+Supabase migration filenames use a `YYYYMMDDHHMMSS` prefix. Look at the most recent file in `supabase/migrations/` (currently `20260722163959_add_revoke_user_sessions_function.sql`) and pick a new timestamp later than that one, matching today's date at the time this task is executed (format: `YYYYMMDDHHMMSS`, e.g. `20260727143000`). Call it `<timestamp_a>`.
 
 - [ ] **Step 2: Write the migration file**
 
-Create `supabase/migrations/<timestamp>_drop_semana_from_relatorios.sql`:
+Create `supabase/migrations/<timestamp_a>_relax_semana_not_null_in_relatorios.sql`:
+
+```sql
+alter table relatorios alter column semana drop not null;
+```
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add supabase/migrations/
+git commit -m "docs: adicionar migration para tornar semana nullable em relatorios"
+```
+
+**Do NOT run this SQL against any database in this task.** This task only creates the local file. See "Applying the migrations" below — this one specifically needs to be applied before/with Task 1's code deploy, not "whenever convenient."
+
+---
+
+### Task 4b: Write the "contract" migration file (drop column — local file only, do not apply)
+
+**Files:**
+- Create: `supabase/migrations/<timestamp_b>_drop_semana_from_relatorios.sql`
+
+- [ ] **Step 1: Determine the timestamp prefix**
+
+Pick a timestamp later than `<timestamp_a>` from Task 4a (format: `YYYYMMDDHHMMSS`). Call it `<timestamp_b>`.
+
+- [ ] **Step 2: Write the migration file**
+
+Create `supabase/migrations/<timestamp_b>_drop_semana_from_relatorios.sql`:
 
 ```sql
 alter table relatorios drop column semana;
@@ -386,7 +425,7 @@ git add supabase/migrations/
 git commit -m "docs: adicionar migration para remover coluna semana de relatorios"
 ```
 
-**Do NOT run this SQL against any database in this task.** This task only creates the local file for version-control history. See "Applying the migration" below for how it actually gets applied.
+**Do NOT run this SQL against any database in this task.** This is the final "contract" step — it must only be applied after Tasks 1-3's code is confirmed live in production (no code anywhere, including any in-flight old instance during a rolling deploy, still references `semana`). See "Applying the migrations" below.
 
 ---
 
@@ -409,7 +448,7 @@ Use the `run` skill if available, or `npm run dev`, and log in as an admin (this
 
 - [ ] **Step 4: Confirm no runtime errors**
 
-Check the terminal running `npm run dev` and the browser console for any errors related to the `semana` column (there shouldn't be any yet, since Task 4's migration hasn't been applied — the column still exists in the database at this point, just unused by the app).
+Check the terminal running `npm run dev` and the browser console for any errors related to the `semana` column. If Task 4a's "expand" migration (`alter column semana drop not null`) has already been applied to the database this dev environment points at, uploads should succeed cleanly. If it has NOT been applied yet, uploading a new report in Step 2 will fail with a `null value in column "semana"` error from Postgres — that's the exact deployment-ordering hazard described earlier in this plan, not a bug in this code. If you hit that error, stop and get the Task 4a migration applied (see "Applying the migrations" below) before re-testing, rather than treating it as a Task 1-3 code defect.
 
 - [ ] **Step 5: Report result**
 
@@ -417,20 +456,23 @@ Note whether all checks in Steps 2-4 passed. Do not report success without havin
 
 ---
 
-## Applying the migration (manual step, outside subagent execution)
+## Applying the migrations (manual step, outside subagent execution)
 
-This is **not** a task for an implementer subagent. After Tasks 1-5 are complete, reviewed, and merged/deployed (code no longer references `semana` anywhere), the column can be dropped from the live database. Options, in order of preference:
+This is **not** a task for an implementer subagent, and it's **two separate actions at two separate times**, not one:
 
-1. **The user applies it directly** via the Supabase dashboard's SQL editor for project `chuppzvaanyasljuknen` (org `aponti-pente-fino`), running the same SQL from `supabase/migrations/<timestamp>_drop_semana_from_relatorios.sql`.
-2. **The controller applies it**, but only if a Supabase MCP tool (e.g. `mcp__claude_ai_Supabase__apply_migration`) or the Supabase CLI becomes available in a later session, AND only after: (a) re-confirming via `list_projects`/equivalent that the connected project is `chuppzvaanyasljuknen`, and (b) getting the user's explicit go-ahead for that specific action at that time — not inferred from this plan having been written.
+**1. Task 4a's migration (`alter column semana drop not null`) — apply this FIRST, before or immediately as Tasks 1-3's code ships.** This is what prevents the "every upload fails" hazard described above. It's low-risk and reversible (as long as no row has `NULL` in `semana` at the time, `alter column semana set not null` reverts it). Options, in order of preference:
+   - **The user applies it directly** via the Supabase dashboard's SQL editor for project `chuppzvaanyasljuknen` (org `aponti-pente-fino`).
+   - **The controller applies it**, only if a Supabase MCP tool or the CLI becomes available, after confirming the correct project and getting explicit go-ahead at that moment.
 
-**Why this isn't automated:** dropping a column is irreversible and operates on a shared production database. The plan's own design doc (`docs/superpowers/specs/2026-07-27-unificar-numeracao-relatorios-design.md`) confirms no real data loss occurs (the column is fully redundant with `nome`), but "no data loss in theory" is not the same bar as "safe to run unattended" — a wrong project connection or a stale MCP session pointed at the wrong database would be a serious, unrecoverable mistake.
+**2. Task 4b's migration (`drop column semana`) — apply this LAST, only after Tasks 1-3's code has been live in production for a while and confirmed working**, with no old code instance still running anywhere that might reference `semana`. Same application options as above. This one is irreversible — the design doc confirms no real data loss occurs (the column is fully redundant with `nome`), but "no data loss in theory" is not the same bar as "safe to run unattended."
+
+**Do not apply Task 4b before Task 4a, and do not apply Task 4b before the code deploy is confirmed.** Applying them out of order reintroduces exactly the breakage this plan update was written to avoid.
 
 ---
 
 ## Self-review notes
 
-- **Spec coverage:** actions.ts changes → Task 1. `/relatorios` query + list display → Task 2. Auditoria detail query + card display → Task 3. Migration file → Task 4. Manual validation from the spec's "Validação" section → Task 5 + the "Applying the migration" section. "Fora de escopo" (README/CHANGELOG/tests wording) → correctly untouched, no task references them.
-- **No placeholders:** every step has literal code or exact commands; the only "TBD"-shaped item (the migration timestamp) is a mechanical, well-defined lookup (pick a value later than the last existing file), not an unresolved design question.
+- **Spec coverage:** actions.ts changes → Task 1. `/relatorios` query + list display → Task 2. Auditoria detail query + card display → Task 3. Expand migration (relax NOT NULL) → Task 4a. Contract migration (drop column) → Task 4b. Manual validation from the spec's "Validação" section → Task 5 + the "Applying the migrations" section. "Fora de escopo" (README/CHANGELOG/tests wording) → correctly untouched, no task references them.
+- **No placeholders:** every step has literal code or exact commands; the only "TBD"-shaped items (the two migration timestamps) are mechanical, well-defined lookups (pick a value later than the last existing file / than Task 4a's), not unresolved design questions.
 - **Type consistency:** `Relatorio` type in `RelatoriosList.tsx` (Task 2) and in `RelatoriosIncluidosCard.tsx` (Task 3) both drop `semana` independently — they're separate local types in separate files, not shared, so no cross-task inconsistency risk.
-- **Ordering:** Task 4 (migration file) is written before Task 5 (manual verification) so the file exists for review, but the SQL is explicitly not run until after everything else ships — verified Task 5's Step 4 accounts for the column still existing in the DB at verification time.
+- **Ordering (revised after Task 1 code review found a critical gap):** the original single-migration plan only protected against one direction of the deploy/migration race (code outliving the column) and missed the other (column still `NOT NULL` outliving the code's insert). Task 4a now closes that gap as a mandatory, low-risk, early step; Task 4b remains the deliberate, deferred, irreversible one. Task 5's Step 4 explicitly tells whoever verifies manually what to expect if Task 4a hasn't been applied yet, so a real deployment-ordering failure isn't mistaken for a Task 1-3 code bug.

@@ -67,15 +67,28 @@ por:
 
 ## Migration do banco
 
-Nova migration, aplicada via MCP do Supabase (mesmo fluxo já usado para `add_id_coluna_to_planilha_geral` em `docs/superpowers/plans/2026-07-14-identificador-unico-cruzamento.md`): confirmar que o projeto Supabase conectado é `chuppzvaanyasljuknen` (org `aponti-pente-fino`) antes de aplicar, rodar
+A coluna `semana` é `NOT NULL` hoje. Isso cria um risco de ordenação que a primeira versão desta spec não tratava: assim que o código parar de enviar `semana` no `insert` (mudança do server action), qualquer tentativa de anexar relatório vai violar a constraint `NOT NULL` e falhar — **até que o banco seja ajustado**. E o inverso também é verdade: se a coluna for removida (`DROP COLUMN`) antes do código parar de referenciá-la, qualquer `select`/`insert` que ainda mencione `semana` quebra por coluna inexistente. As duas ordens têm uma janela de quebra se código e banco não forem coordenados.
 
-```sql
-alter table relatorios drop column semana;
-```
+A solução padrão para isso é o padrão **expand/contract** em duas migrations separadas, não uma:
 
-via `mcp__claude_ai_Supabase__apply_migration`, descobrir a versão atribuída via `mcp__claude_ai_Supabase__list_migrations`, e então criar o arquivo local `supabase/migrations/<version>_drop_semana_from_relatorios.sql` com o mesmo SQL, para manter o histórico de migrations do repositório em sincronia com o banco.
+1. **Expand (relaxar), primeiro e independente do deploy do código:**
+   ```sql
+   alter table relatorios alter column semana drop not null;
+   ```
+   Essa mudança é segura em qualquer ordem: código antigo (que ainda envia `semana`) continua funcionando normalmente: código novo (que não envia mais `semana`) passa a poder inserir sem violar a constraint, já que a coluna aceita `NULL`. Pode ser aplicada a qualquer momento, inclusive antes do código ser mergeado — não há janela de quebra.
 
-**Ordem de aplicação:** o código (server action, queries, componentes) deve parar de referenciar `semana` ANTES da migration rodar, para evitar uma janela em que o código ainda tenta inserir/selecionar uma coluna que não existe mais. Como o deploy do PR e a aplicação da migration não são atômicos entre si, a migration só deve ser aplicada depois que o código correspondente estiver mergeado/deployado (ou, no mínimo, na mesma sessão de implementação, migration por último).
+2. **Contract (remover a coluna de vez), só depois do código novo estar em produção e confirmado funcionando:**
+   ```sql
+   alter table relatorios drop column semana;
+   ```
+   Só é seguro depois que nenhum código em produção (nem uma versão antiga ainda rodando durante um deploy gradual) referencia mais `semana` em select/insert.
+
+Ambas aplicadas via MCP do Supabase (mesmo fluxo já usado para `add_id_coluna_to_planilha_geral` em `docs/superpowers/plans/2026-07-14-identificador-unico-cruzamento.md`): confirmar que o projeto Supabase conectado é `chuppzvaanyasljuknen` (org `aponti-pente-fino`) antes de aplicar cada uma, descobrir a versão atribuída via `mcp__claude_ai_Supabase__list_migrations`, e criar o arquivo local correspondente em `supabase/migrations/` com o mesmo SQL.
+
+**Ordem de aplicação:**
+1. Migration 1 (drop not null) — aplicar o quanto antes, idealmente ANTES de mergear/deployar o código que para de enviar `semana` (Task 1 do plano). Baixo risco, reversível (`alter column semana set not null` desfaz, se necessário, desde que não haja linhas com `NULL`).
+2. Deploy do código (Tasks 1-3 do plano).
+3. Migration 2 (drop column) — só depois do passo 2 confirmado em produção. Irreversível.
 
 ## Fora de escopo
 
