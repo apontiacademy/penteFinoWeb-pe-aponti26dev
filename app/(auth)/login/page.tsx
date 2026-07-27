@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { Loader2, ShieldCheck, BarChart3, FileText } from 'lucide-react'
+import { LinkPendingIndicator } from '@/components/LinkPendingIndicator'
 
 export default function LoginPage() {
   const [state, action, pending] = useActionState(login, null)
@@ -122,6 +123,7 @@ export default function LoginPage() {
                   className="text-sm text-muted-foreground hover:text-foreground"
                 >
                   Esqueci minha senha
+                  <LinkPendingIndicator />
                 </Link>
               </div>
             </div>
