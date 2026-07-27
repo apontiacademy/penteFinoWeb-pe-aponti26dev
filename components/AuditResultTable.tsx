@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { ClearableInput } from '@/components/ui/clearable-input'
 import {
   Combobox,
   ComboboxChips,
@@ -371,16 +371,18 @@ export function AuditResultTable({ auditId, naoFeitos, feitos }: Props) {
             </ComboboxList>
           </ComboboxContent>
         </Combobox>
-        <Input
+        <ClearableInput
           placeholder="Filtrar por nome..."
           value={filters.nome}
           onChange={(e) => handleFilter('nome', e.target.value)}
+          onClear={() => handleFilter('nome', '')}
           className="h-8 w-52 text-sm"
         />
-        <Input
+        <ClearableInput
           placeholder="Empresa..."
           value={filters.empresa}
           onChange={(e) => handleFilter('empresa', e.target.value)}
+          onClear={() => handleFilter('empresa', '')}
           className="h-8 w-48 text-sm"
         />
         {hasFilters && (
